@@ -902,8 +902,9 @@ namespace WebsitePanel.Providers.Web
 			//
 			#endregion
 
+
 			#region ColdFusion script mappings
-			//ColdFusion
+            //ColdFusion code
 			if (virtualDir.ColdFusionInstalled)
 			{
 				handlersSvc.AddScriptMaps(virtualDir, COLDFUSION_EXTENSIONS, ColdFusionPath,
@@ -1348,26 +1349,78 @@ namespace WebsitePanel.Providers.Web
 			#region ColdFusion Virtual Directories
             using (ServerManager srvman = webObjectsSvc.GetServerManager())
             {
-                if (ColdFusionDirectoriesAdded(srvman, site.SiteId))
+                //TODO: NANOFIX:Added the If block and put the rest of the code in the else block(For Virtual Directory)
+                if (string.IsNullOrEmpty(base.CFFlashRemotingDirPath))
                 {
-                    if (!site.CreateCFVirtualDirectories)
-                    {
-                        DeleteCFVirtualDirectories(site.SiteId);
-                        site.CreateCFVirtualDirectories = false;
-                    }
+                    DeleteCFVirtualDirectories(site.SiteId);
+                    site.CreateCFVirtualDirectories = false;
                 }
                 else
                 {
-                    if (site.CreateCFVirtualDirectories)
+                    if (ColdFusionDirectoriesAdded(srvman, site.SiteId))
                     {
-                        CreateCFVirtualDirectories(site.SiteId);
-                        site.CreateCFVirtualDirectories = true;
+                        if (!site.CreateCFVirtualDirectories)
+                        {
+                            DeleteCFVirtualDirectories(site.SiteId);
+                            site.CreateCFVirtualDirectories = false;
+                        }
+                    }
+                    else
+                    {
+                        if (site.CreateCFVirtualDirectories)
+                        {
+                            CreateCFVirtualDirectories(site.SiteId);
+                            site.CreateCFVirtualDirectories = true;
+                        }
                     }
                 }
             }
 			#endregion
 
-			// remove dedicated pools if any
+            #region ColdFusionHandlerFix
+            //TODO: NANOFIX: Region Added for Cold Fusion Handler Fix
+            using (ServerManager srvman = webObjectsSvc.GetServerManager())
+            {
+                var appConfig = srvman.GetApplicationHostConfiguration();
+                ConfigurationSection handlersSection = appConfig.GetSection(Constants.HandlersSection, (site as WebVirtualDirectory).FullQualifiedPath); 
+
+                var handlersCollection = handlersSection.GetCollection();
+
+                List<ConfigurationElement> cfElementList = new List<ConfigurationElement>();
+                foreach (var action in handlersCollection)
+                {
+                    var name = action["name"].ToString();
+                    if (string.Compare(name, "coldfusion", true) == 0)
+                    {
+                        cfElementList.Add(action);
+                    }
+                }
+                foreach (var e in cfElementList)
+                {
+                    handlersCollection.Remove(e);
+                }
+                if (site.ColdFusionInstalled)
+                {
+
+                    var cfElement = handlersCollection.CreateElement("add");
+
+                    cfElement["name"] = "coldfusion";
+                    cfElement["modules"] = "IsapiModule";
+                    cfElement["path"] = "*";
+                    cfElement["scriptProcessor"] = base.ColdFusionPath;
+                    cfElement["verb"] = "*";
+                    cfElement["resourceType"] = "Unspecified";
+                    cfElement["requireAccess"] = "None";
+                    cfElement["preCondition"] = "bitness64";
+                    handlersCollection.AddAt(0, cfElement);
+
+
+                }
+                srvman.CommitChanges();
+            }
+            #endregion
+
+            // remove dedicated pools if any
 			if (deleteDedicatedPools)
 				DeleteDedicatedPoolsAllocated(site.Name);
 
@@ -1959,15 +2012,36 @@ namespace WebsitePanel.Providers.Web
             if (version.Equals(HELICON_APE_NOT_REGISTERED))
             {
                 // Ape installed for site
-                return "Helicon.Ape.Module";
+                return "Helicon.Ape.ApeModule";
             }
             else
             {
                 // Ape installed globally in GAC
-                // return fiil type with version
+                // return full type with version
                 return
                     string.Format(
                         "Helicon.Ape.ApeModule, Helicon.Ape, Version={0}, Culture=neutral, PublicKeyToken=95bfbfd1a38437eb",
+                        version);
+            }
+        }
+
+        private string GetHeliconApeHandlerType(string siteId)
+        {
+            string installDir = GetHeliconApeInstallDir(siteId);
+            string version = GetHeliconApeVersion(siteId, installDir);
+            
+            if (version.Equals(HELICON_APE_NOT_REGISTERED))
+            {
+                // Ape installed for site
+                return "Helicon.Ape.Handler";
+            }
+            else
+            {
+                // Ape installed globally in GAC
+                // return full type with version
+                return
+                    string.Format(
+                        "Helicon.Ape.Handler, Helicon.Ape, Version={0}, Culture=neutral, PublicKeyToken=95bfbfd1a38437eb",
                         version);
             }
         }
@@ -2158,7 +2232,7 @@ namespace WebsitePanel.Providers.Web
                 ConfigurationElementCollection handlersCollection = handlersSection.GetCollection();
                 ConfigurationElement handlerAdd = handlersCollection.CreateElement("add");
                 handlerAdd["name"] = Constants.HeliconApeModule;
-                handlerAdd["type"] = GetHeliconApeModuleType(siteId);
+                handlerAdd["type"] = GetHeliconApeHandlerType(siteId);
                 handlerAdd["path"] = Constants.HeliconApeHandlerPath;
                 handlerAdd["verb"] = "*";
                 handlerAdd["resourceType"] = "Unspecified";

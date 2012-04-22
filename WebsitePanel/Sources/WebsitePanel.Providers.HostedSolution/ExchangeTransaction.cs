@@ -84,6 +84,21 @@ namespace WebsitePanel.Providers.HostedSolution
 			action.Id = id;
 			Actions.Add(action);
 		}
+        internal void RegisterNewRoomsAddressList(string id)
+        {
+            TransactionAction action = new TransactionAction();
+            action.ActionType = TransactionAction.TransactionActionTypes.CreateRoomsAddressList;
+            action.Id = id;
+            Actions.Add(action);
+        }
+        internal void RegisterNewAddressPolicy(string id)
+        {
+            TransactionAction action = new TransactionAction();
+            action.ActionType = TransactionAction.TransactionActionTypes.CreateAddressPolicy;
+            action.Id = id;
+            Actions.Add(action);
+        }
+
 
 		internal void RegisterNewOfflineAddressBook(string id)
 		{
@@ -220,6 +235,7 @@ namespace WebsitePanel.Providers.HostedSolution
 			CreateOrganizationUnit,
 			CreateGlobalAddressList,
 			CreateAddressList,
+            CreateAddressPolicy,
 			CreateOfflineAddressBook,
 			CreateDistributionGroup,
 			EnableDistributionGroup,
@@ -232,7 +248,8 @@ namespace WebsitePanel.Providers.HostedSolution
 			AddMailboxFullAccessPermission,
 			AddSendAsPermission,
 			RemoveMailboxFullAccessPermission,
-			RemoveSendAsPermission
+			RemoveSendAsPermission,
+            CreateRoomsAddressList
 		};
 	}
 

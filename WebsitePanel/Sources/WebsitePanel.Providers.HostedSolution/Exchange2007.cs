@@ -67,6 +67,7 @@ namespace WebsitePanel.Providers.HostedSolution
 
 		#region Constants
 		private const string CONFIG_CLEAR_QUERYBASEDN = "WebsitePanel.Exchange.ClearQueryBaseDN";
+        private const string CONFIG_ENABLESP2ABP = "WebsitePanel.Exchange.enableSP2abp";
 		#endregion
 
 		#region Properties
@@ -183,11 +184,11 @@ namespace WebsitePanel.Providers.HostedSolution
 		}
 
 		public bool DeleteOrganization(string organizationId, string distinguishedName,
-			string globalAddressList, string addressList, string offlineAddressBook,
+			string globalAddressList, string addressList, string roomsAddressList, string offlineAddressBook,
 			string securityGroup)
 		{
 			return DeleteOrganizationInternal(organizationId, distinguishedName, globalAddressList,
-				addressList, offlineAddressBook, securityGroup);
+				addressList, roomsAddressList, offlineAddressBook, securityGroup);
 		}
 
 		public void SetOrganizationStorageLimits(string organizationDistinguishedName, int issueWarningKB, int prohibitSendKB,
@@ -617,7 +618,7 @@ namespace WebsitePanel.Providers.HostedSolution
 					{
 						Organization org = item as Organization;
 						DeleteOrganization(org.OrganizationId, org.DistinguishedName, org.GlobalAddressList,
-							org.AddressList, org.OfflineAddressBook, org.SecurityGroup);
+							org.AddressList, org.RoomsAddressList, org.OfflineAddressBook, org.SecurityGroup);
 					}
 					else if (item is ExchangeDomain)
 					{
@@ -737,6 +738,12 @@ namespace WebsitePanel.Providers.HostedSolution
 				ExchangeLog.LogInfo("  Address List: {0}", alId);
 				UpdateAddressList(runSpace, alId, securityGroupPath);
 
+                //create RAL
+                string ralId = CreateRoomsAddressList(runSpace, organizationId);
+                transaction.RegisterNewRoomsAddressList(ralId);
+                ExchangeLog.LogInfo("  Rooms Address List: {0}", ralId);
+                UpdateRoomsAddressList(runSpace, ralId, securityGroupPath);
+
 				//create ActiveSync policy
 				string asId = CreateActiveSyncPolicy(runSpace, organizationId);
 				transaction.RegisterNewActiveSyncPolicy(asId);
@@ -752,8 +759,10 @@ namespace WebsitePanel.Providers.HostedSolution
 
 				info.AddressList = alId;
 				info.GlobalAddressList = galId;
+                info.RoomsAddressList = ralId;
 				info.OrganizationId = organizationId;
 				info.Database = databaseId;
+
 			}
 			catch (Exception ex)
 			{
@@ -800,7 +809,7 @@ namespace WebsitePanel.Providers.HostedSolution
 
 				if (result.Count > 0)
 				{
-					virtualDir = ObjToString(GetPSObjectProperty(result[0], "Identity"));
+                    virtualDir = ObjToString(GetPSObjectProperty(result[0], "Identity"));
 				}
 			}
 			finally
@@ -838,7 +847,21 @@ namespace WebsitePanel.Providers.HostedSolution
 				transaction.RegisterNewOfflineAddressBook(oabId);
 				UpdateOfflineAddressBook(runSpace, oabId, securityGroupId);
 				info.OfflineAddressBook = oabId;
-			}
+
+                //create ABP
+
+                bool enableSP2abp = false;
+				if (ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP] != null)
+					enableSP2abp = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP]);
+				Version exchangeVersion = GetExchangeVersion();
+
+                if (enableSP2abp && (exchangeVersion >= new Version(14, 2)))
+                {                                        
+                    string abpId = CreateAddressPolicy(runSpace, organizationId);
+                    transaction.RegisterNewAddressPolicy(abpId);
+                    ExchangeLog.LogInfo("  Address Policy: {0}", abpId);
+                }
+            }
 			catch (Exception ex)
 			{
 				ExchangeLog.LogError("CreateOrganizationOfflineAddressBookInternal", ex);
@@ -851,6 +874,8 @@ namespace WebsitePanel.Providers.HostedSolution
 				CloseRunspace(runSpace);
 			}
 			ExchangeLog.LogEnd("CreateOrganizationOfflineAddressBookInternal");
+            
+
 			return info;
 		}
 
@@ -886,7 +911,7 @@ namespace WebsitePanel.Providers.HostedSolution
 
 
 		private bool DeleteOrganizationInternal(string organizationId, string distinguishedName,
-			string globalAddressList, string addressList, string offlineAddressBook, string securityGroup)
+			string globalAddressList, string addressList, string roomsAddressList, string offlineAddressBook, string securityGroup)
 		{
 			ExchangeLog.LogStart("DeleteOrganizationInternal");
 			bool ret = true;
@@ -919,6 +944,30 @@ namespace WebsitePanel.Providers.HostedSolution
 				if (!DeleteOrganizationPublicFolders(runSpace, organizationId))
 					ret = false;
 
+                //delete ABP
+
+                bool enableSP2abp = false;
+				if (ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP] != null)
+				enableSP2abp = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP]);
+				Version exchangeVersion = GetExchangeVersion();
+
+                if (enableSP2abp && (exchangeVersion >= new Version(14, 2)))
+                {
+
+
+                    string adpstring = GetAddressPolicyName(organizationId);
+
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(adpstring))
+                            DeleteAddressPolicy(runSpace, adpstring);
+                    }
+                    catch (Exception ex)
+                    {
+                        ret = false;
+                        ExchangeLog.LogError("Could not delete Address Policy " + globalAddressList, ex);
+                    }
+                }
 
 				//delete OAB
 				try
@@ -943,6 +992,18 @@ namespace WebsitePanel.Providers.HostedSolution
 					ret = false;
 					ExchangeLog.LogError("Could not delete Address List " + addressList, ex);
 				}
+
+                //delete RAL (Rooms Address List)
+                try
+                {
+                    if (!string.IsNullOrEmpty(roomsAddressList))
+                        DeleteRoomsAddressList(runSpace, roomsAddressList);
+                }
+                catch (Exception ex)
+                {
+                    ret = false;
+                    ExchangeLog.LogError("Could not delete Rooms Address List " + roomsAddressList, ex);
+                }
 
 				//delete GAL
 				try
@@ -1748,6 +1809,7 @@ namespace WebsitePanel.Providers.HostedSolution
 			int attempts = 0;
 			string id = null;
 
+            Version exchangeVersion = GetExchangeVersion();
 
 
 			try
@@ -1765,7 +1827,8 @@ namespace WebsitePanel.Providers.HostedSolution
 						cmd = new Command("Enable-Mailbox");
 						cmd.Parameters.Add("Identity", upn);
 						cmd.Parameters.Add("Alias", accountName);
-						cmd.Parameters.Add("Database", mailboxDatabase);
+                        if (!(mailboxDatabase == "*" && exchangeVersion >= new Version(14, 0)))
+                            cmd.Parameters.Add("Database", mailboxDatabase);
 						if (accountType == ExchangeAccountType.Equipment)
 							cmd.Parameters.Add("Equipment");
 						else if (accountType == ExchangeAccountType.Room)
@@ -1795,6 +1858,7 @@ namespace WebsitePanel.Providers.HostedSolution
 				//transaction.RegisterNewMailbox(id);
 
 				string windowsEmailAddress = ObjToString(GetPSObjectProperty(result[0], "WindowsEmailAddress"));
+                string adpstring = GetAddressPolicyName(organizationId);
 
 				//update mailbox
 				cmd = new Command("Set-Mailbox");
@@ -1805,6 +1869,12 @@ namespace WebsitePanel.Providers.HostedSolution
 				cmd.Parameters.Add("CustomAttribute3", windowsEmailAddress);
 				cmd.Parameters.Add("PrimarySmtpAddress", upn);
 				cmd.Parameters.Add("WindowsEmailAddress", upn);
+                
+                bool enableSP2abp = false;
+				if (ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP] != null)
+					enableSP2abp = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP]);
+				if (enableSP2abp && (exchangeVersion >= new Version(14, 2)))
+					cmd.Parameters.Add("AddressBookPolicy", adpstring);
 
 				cmd.Parameters.Add("UseDatabaseQuotaDefaults", new bool?(false));
 				cmd.Parameters.Add("UseDatabaseRetentionDefaults", false);
@@ -1813,6 +1883,8 @@ namespace WebsitePanel.Providers.HostedSolution
 				cmd.Parameters.Add("ProhibitSendReceiveQuota", ConvertKBToUnlimited(prohibitSendReceiveKB));
 				cmd.Parameters.Add("RetainDeletedItemsFor", ConvertDaysToEnhancedTimeSpan(keepDeletedItemsDays));
 				ExecuteShellCommand(runSpace, cmd);
+
+
 
 				//update AD object
 				string globalAddressListName = this.GetGlobalAddressListName(organizationId);
@@ -1824,7 +1896,6 @@ namespace WebsitePanel.Providers.HostedSolution
 				bool clearQueryBaseDN = false;
 				if (ConfigurationManager.AppSettings[CONFIG_CLEAR_QUERYBASEDN] != null)
 					clearQueryBaseDN = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_CLEAR_QUERYBASEDN]);
-				Version exchangeVersion = GetExchangeVersion();
 
 				if (!(clearQueryBaseDN && (exchangeVersion >= new Version(14, 1))))
 					SetADObjectPropertyValue(mailbox, "msExchQueryBaseDN", globalAddressListDN);
@@ -1885,6 +1956,8 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExchangeTransaction transaction = StartTransaction();
 			Runspace runSpace = null;
 
+            Version exchangeVersion = GetExchangeVersion();
+
 			try
 			{
 				runSpace = OpenRunspace();
@@ -1904,7 +1977,8 @@ namespace WebsitePanel.Providers.HostedSolution
 				cmd.Parameters.Add("DisplayName", displayName);
 				cmd.Parameters.Add("Password", securePassword);
 				cmd.Parameters.Add("ResetPasswordOnNextLogon", false);
-				cmd.Parameters.Add("Database", mailboxDatabase);
+                if (!(mailboxDatabase == "*" && exchangeVersion >= new Version(14, 0)))
+                    cmd.Parameters.Add("Database", mailboxDatabase);
 				if (accountType == ExchangeAccountType.Equipment)
 					cmd.Parameters.Add("Equipment");
 				else if (accountType == ExchangeAccountType.Room)
@@ -1916,6 +1990,7 @@ namespace WebsitePanel.Providers.HostedSolution
 				transaction.RegisterNewMailbox(id);
 
 				string windowsEmailAddress = ObjToString(GetPSObjectProperty(result[0], "WindowsEmailAddress"));
+                string adpstring = GetAddressPolicyName(organizationId);
 
 				//update mailbox
 				cmd = new Command("Set-Mailbox");
@@ -1926,6 +2001,12 @@ namespace WebsitePanel.Providers.HostedSolution
 				cmd.Parameters.Add("CustomAttribute3", windowsEmailAddress);
 				cmd.Parameters.Add("PrimarySmtpAddress", upn);
 				cmd.Parameters.Add("WindowsEmailAddress", upn);
+                
+                bool enableSP2abp = false;
+                if (ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP] != null)
+                    enableSP2abp = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP]);
+                if (enableSP2abp && (exchangeVersion >= new Version(14, 2)))
+                    cmd.Parameters.Add("AddressBookPolicy", adpstring);
 
 				cmd.Parameters.Add("UseDatabaseQuotaDefaults", new bool?(false));
 				cmd.Parameters.Add("UseDatabaseRetentionDefaults", false);
@@ -1944,7 +2025,6 @@ namespace WebsitePanel.Providers.HostedSolution
 				bool clearQueryBaseDN = false;
 				if (ConfigurationManager.AppSettings[CONFIG_CLEAR_QUERYBASEDN] != null)
 					clearQueryBaseDN = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_CLEAR_QUERYBASEDN]);
-				Version exchangeVersion = GetExchangeVersion();
 
 				if (!(clearQueryBaseDN && (exchangeVersion >= new Version(14, 1))))
 					SetADObjectPropertyValue(mailbox, "msExchQueryBaseDN", globalAddressListDN);
@@ -4671,7 +4751,7 @@ namespace WebsitePanel.Providers.HostedSolution
 
 		#endregion
 
-		#region Address Lists (GAL, AL, OAB)
+		#region Address Lists (GAL, AL, RAL, OAB, ABP)
 
 		private string GetAddressListDN(Runspace runSpace, string id)
 		{
@@ -4685,7 +4765,7 @@ namespace WebsitePanel.Providers.HostedSolution
 				resultObjectDN = this.GetResultObjectDN(result);
 				ExchangeLog.DebugInfo("AL DN: {0}", new object[] { resultObjectDN });
 			}
-			ExchangeLog.LogEnd("GetAddressListDN");
+            ExchangeLog.LogEnd("GetAddressListDN");
 			return resultObjectDN;
 		}
 
@@ -4755,7 +4835,6 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExchangeLog.LogEnd("UpdateAddressList");
 		}
 
-
 		private void DeleteAddressList(Runspace runSpace, string id)
 		{
 			ExchangeLog.LogStart("DeleteAddressList");
@@ -4765,6 +4844,99 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExecuteShellCommand(runSpace, cmd);
 			ExchangeLog.LogEnd("DeleteAddressList");
 		}
+
+        private string GetRoomsAddressListDN(Runspace runSpace, string id)
+        {
+            ExchangeLog.LogStart("GetRoomsAddressListDN");
+            string resultObjectDN = null;
+            Command cmd = new Command("Get-AddressList");
+            cmd.Parameters.Add("Identity", id);
+            Collection<PSObject> result = this.ExecuteShellCommand(runSpace, cmd);
+            if ((result != null) && (result.Count > 0))
+            {
+                resultObjectDN = this.GetResultObjectDN(result);
+                ExchangeLog.DebugInfo("RAL DN: {0}", new object[] { resultObjectDN });
+            }
+            ExchangeLog.DebugInfo("GetRommsAddressListDN, cmd = {0}", cmd.CommandText);
+            ExchangeLog.LogEnd("GetRoomsAddressListDN");
+            return resultObjectDN;
+        }
+
+        private string CreateRoomsAddressList(Runspace runSpace, string organizationId)
+        {
+            ExchangeLog.LogStart("CreateRoomsAddressList");
+            string roomsAddressListName = this.GetRoomsAddressListName(organizationId);
+            string roomsAddressListDN = this.GetRoomsAddressListDN(runSpace, roomsAddressListName);
+            if (!string.IsNullOrEmpty(roomsAddressListDN))
+            {
+                //rooms address list already exists - we will use it
+                ExchangeLog.LogWarning("Rooms Address List '{0}' already exists", new object[] { roomsAddressListName });
+            }
+            else
+            {
+                //try to create a new rooms address list (10 attempts)
+                int attempts = 0;
+                Command cmd = null;
+                Collection<PSObject> result = null;
+
+                while (true)
+                {
+                    try
+                    {
+                        //try to create address list
+                        cmd = new Command("New-AddressList");
+                        cmd.Parameters.Add("Name", roomsAddressListName);
+                        cmd.Parameters.Add("IncludedRecipients", "Resources");
+                        cmd.Parameters.Add("ConditionalCustomAttribute1", organizationId);
+
+                        result = ExecuteShellCommand(runSpace, cmd);
+                        roomsAddressListDN = CheckResultObjectDN(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        ExchangeLog.LogError(ex);
+                    }
+                    if (roomsAddressListDN != null)
+                        break;
+
+                    if (attempts > 9)
+                        throw new Exception(
+                            string.Format("Could not create Rooms Address List '{0}' cmd = '{1}'", roomsAddressListName, cmd));
+
+                    attempts++;
+                    ExchangeLog.LogWarning("Attempt #{0} to create rooms address list failed!", attempts);
+                    // wait 1 sec
+                    System.Threading.Thread.Sleep(1000);
+                }
+            }
+
+            ExchangeLog.LogEnd("CreateRoomsAddressList");
+            return roomsAddressListDN;
+        }
+
+        private void UpdateRoomsAddressList(Runspace runSpace, string id, string securityGroup)
+        {
+            ExchangeLog.LogStart("UpdateRoomsAddressList");
+
+            string path = AddADPrefix(id);
+            Command cmd = new Command("Update-AddressList");
+            cmd.Parameters.Add("Identity", id);
+            ExecuteShellCommand(runSpace, cmd);
+
+            AdjustADSecurity(path, securityGroup, false);
+
+            ExchangeLog.LogEnd("UpdateRoomsAddressList");
+        }
+
+        private void DeleteRoomsAddressList(Runspace runSpace, string id)
+        {
+            ExchangeLog.LogStart("DeleteRoomsAddressList");
+            Command cmd = new Command("Remove-AddressList");
+            cmd.Parameters.Add("Identity", id);
+            cmd.Parameters.Add("Confirm", false);
+            ExecuteShellCommand(runSpace, cmd);
+            ExchangeLog.LogEnd("DeleteRoomsAddressList");
+        }
 
 		private string GetGlobalAddressListDN(Runspace runSpace, string id)
 		{
@@ -4814,7 +4986,6 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExchangeLog.LogEnd("UpdateGlobalAddressList");
 		}
 
-
 		private void DeleteGlobalAddressList(Runspace runSpace, string id)
 		{
 			ExchangeLog.LogStart("DeleteGlobalAddressList");
@@ -4830,7 +5001,22 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExchangeLog.LogStart("CreateOfflineAddressBook");
 
 			string oabName = GetOfflineAddressBookName(organizationId);
-			string addressListName = GetAddressListName(organizationId);
+
+			bool enableSP2abp = false;
+			if (ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP] != null)
+				enableSP2abp = Boolean.Parse(ConfigurationManager.AppSettings[CONFIG_ENABLESP2ABP]);
+			Version exchangeVersion = GetExchangeVersion();
+			string addressListName;
+			if (enableSP2abp && (exchangeVersion >= new Version(14, 2)))
+			{
+				// Ex2010SP2 with ABP support, want to use GAL for OAB
+				addressListName = GetGlobalAddressListName(organizationId);
+			}
+			else
+			{
+				// Ex2007 or Ex2010 without ABP support, have to use AL for OAB
+				addressListName = GetAddressListName(organizationId);
+			}
 
 			Command cmd = new Command("New-OfflineAddressBook");
 			cmd.Parameters.Add("Name", oabName);
@@ -4838,13 +5024,10 @@ namespace WebsitePanel.Providers.HostedSolution
 			cmd.Parameters.Add("AddressLists", addressListName);
 			cmd.Parameters.Add("PublicFolderDistributionEnabled", true);
 			cmd.Parameters.Add("IsDefault", false);
-
-
-			//TODO: fix web distribution
-			/*if (!string.IsNullOrEmpty(oabVirtualDir))
+			if (!string.IsNullOrEmpty(oabVirtualDirs))
 			{
 				cmd.Parameters.Add("VirtualDirectories", oabVirtualDirs);
-			}*/
+			}
 
 			Collection<PSObject> result = ExecuteShellCommand(runSpace, cmd);
 			string id = GetResultObjectDN(result);
@@ -4880,6 +5063,41 @@ namespace WebsitePanel.Providers.HostedSolution
 			ExchangeLog.LogEnd("DeleteOfflineAddressBook");
 		}
 
+        private string CreateAddressPolicy(Runspace runSpace, string organizationId) 
+        {
+            ExchangeLog.LogStart("CreateAddressPolicy");
+
+            string ABP = GetAddressPolicyName(organizationId);
+            string AL = GetAddressListName(organizationId);
+            string GAL = GetGlobalAddressListName(organizationId);
+            string OAB = GetOfflineAddressBookName(organizationId);
+            string RL = GetRoomsAddressListName(organizationId);
+
+            Command cmd = new Command("New-AddressBookPolicy");
+            cmd.Parameters.Add("Name", ABP);
+            cmd.Parameters.Add("GlobalAddressList", GAL);
+            cmd.Parameters.Add("OfflineAddressBook", OAB);
+            cmd.Parameters.Add("AddressLists", AL);
+            cmd.Parameters.Add("RoomList", RL);
+
+
+            Collection<PSObject> result = ExecuteShellCommand(runSpace, cmd);
+            string id = GetResultObjectDN(result);
+
+            ExchangeLog.LogEnd("CreateAddressPolicy");
+            return id;
+        }
+
+        private void DeleteAddressPolicy(Runspace runSpace, string id)
+        {
+            ExchangeLog.LogStart("DeleteAddressPolicy");
+            Command cmd = new Command("Remove-AddressBookPolicy");
+            cmd.Parameters.Add("Identity", id);
+            cmd.Parameters.Add("Confirm", false);
+            ExecuteShellCommand(runSpace, cmd);
+            ExchangeLog.LogEnd("DeleteAddressPolicy");
+        }
+
 		private string GetAddressListName(string orgName)
 		{
 			return orgName + " Address List";
@@ -4894,6 +5112,15 @@ namespace WebsitePanel.Providers.HostedSolution
 		{
 			return orgName + " Offline Address Book";
 		}
+        private string GetAddressPolicyName(string orgName)
+        {
+            return orgName + " Address Policy";
+        }
+
+        private string GetRoomsAddressListName(string orgName)
+        {
+            return orgName + " Rooms";
+        }
 
 		#endregion
 
@@ -6500,6 +6727,9 @@ namespace WebsitePanel.Providers.HostedSolution
 				case TransactionAction.TransactionActionTypes.CreateAddressList:
 					DeleteAddressList(runspace, action.Id);
 					break;
+                case TransactionAction.TransactionActionTypes.CreateRoomsAddressList:
+                    DeleteRoomsAddressList(runspace, action.Id);
+                    break;
 				case TransactionAction.TransactionActionTypes.CreateOfflineAddressBook:
 					DeleteOfflineAddressBook(runspace, action.Id);
 					break;
