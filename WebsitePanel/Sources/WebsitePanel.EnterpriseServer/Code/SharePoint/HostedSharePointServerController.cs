@@ -339,14 +339,19 @@ namespace WebsitePanel.EnterpriseServer.Code.SharePoint
                         DnsRecord[] records = ServerController.GetDnsZoneRecords(domain.DomainId);
                         foreach (DnsRecord record in records)
                         {
-                            if (record.RecordType.Equals(DnsRecordType.A) && (record.RecordName == hostName))
+                                                                var type = record.RecordType;
+								if ((type == DnsRecordType.A || type == DnsRecordType.AAAA) && String.IsNullOrEmpty(record.RecordName))
                             {
-                                ServerController.DeleteDnsZoneRecord(domain.DomainId, hostName, DnsRecordType.A, record.RecordData);
+ServerController.DeleteDnsZoneRecord(domain.DomainId, String.Empty, type, record.RecordData);
+
                                 break;
                             }
                         }
 
                         ServerController.AddDnsZoneRecord(domain.DomainId, hostName, DnsRecordType.A, hostedSharePointSettings["RootWebApplicationIpAddress"], 0, 0, 0, 0);
+						var ip = hostedSharePointSettings["RootWebApplicationIpAddress"];
+						var type2 = ip.Contains(":") ? DnsRecordType.AAAA : DnsRecordType.A;
+						ServerController.AddDnsZoneRecord(domain.DomainId, String.Empty, type2, ip, 0);
                     }
                 }
 
@@ -411,7 +416,26 @@ namespace WebsitePanel.EnterpriseServer.Code.SharePoint
                     DomainInfo domain = ServerController.GetDomain(domainName);
                     if (domain != null)
                     {
-                        ServerController.DeleteDnsZoneRecord(domain.DomainId, hostName, DnsRecordType.A, hostedSharePointSettings["RootWebApplicationIpAddress"]);
+						var ip = hostedSharePointSettings["RootWebApplicationIpAddress"];
+						var type = ip.Contains(":") ? DnsRecordType.AAAA : DnsRecordType.A;
+
+
+						ServerController.DeleteDnsZoneRecord(domain.DomainId, String.Empty, type, ip);
+						ServerController.DeleteDnsZoneRecord(domain.DomainId, "www", type, ip);
+                        if (!String.IsNullOrEmpty(domain.WebSiteName))
+                        {
+                            DnsRecord[] records = ServerController.GetDnsZoneRecords(domain.DomainId);
+                            foreach (DnsRecord record in records)
+                            {
+                                type = record.RecordType;
+                                if ((type == DnsRecordType.A || type == DnsRecordType.AAAA) && record.RecordName.Equals("www", StringComparison.CurrentCultureIgnoreCase))
+                                {
+                                    ServerController.AddDnsZoneRecord(domain.DomainId, String.Empty, DnsRecordType.A,
+                                                                      record.RecordData, 0);
+                                    break;
+                                }
+                            }
+                        }
                     }
                 }
 
