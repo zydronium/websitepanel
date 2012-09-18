@@ -3368,7 +3368,7 @@ namespace WebsitePanel.Providers.Web
 		}
 		#endregion
 
-		public bool IsIISInstalled()
+		public virtual bool IsIISInstalled()
 		{
 			int value = 0;
 			RegistryKey root = Registry.LocalMachine;
@@ -3393,6 +3393,18 @@ namespace WebsitePanel.Providers.Web
         private const string MS_DEPLOY_ASSEMBLY_NAME = "Microsoft.Web.Deployment";
         private const string WPI_INSTANCE_VIEWER = "viewer";
 	    private const string WPI_INSTANCE_INSTALLER = "installer";
+
+        virtual public bool CheckLoadUserProfile()
+        {
+            throw new NotImplementedException("LoadUserProfile option valid only on IIS7 or higer");
+        }
+
+        virtual public void EnableLoadUserProfile()
+        {
+            throw new NotImplementedException("LoadUserProfile option valid only on IIS7 or higer");
+        }
+
+        
 
 	    public void InitFeeds(int UserId, string[] feeds)
         {
@@ -3667,5 +3679,10 @@ namespace WebsitePanel.Providers.Web
 			throw new NotSupportedException();
 		}
 		#endregion
-	}
+
+
+
+
+
+    }
 }

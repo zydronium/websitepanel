@@ -3477,7 +3477,7 @@ namespace WebsitePanel.Providers.Web
 
 		#endregion
 
-		public new bool IsIISInstalled()
+		public override bool IsIISInstalled()
 		{
 			int value = 0;
 			RegistryKey root = Registry.LocalMachine;
@@ -3488,7 +3488,7 @@ namespace WebsitePanel.Providers.Web
 				rk.Close();
 			}
 
-			return value == 7 || value == 8;
+			return value == 7;
 		}
 
 		public override bool IsInstalled()
@@ -4041,6 +4041,26 @@ namespace WebsitePanel.Providers.Web
         #region Web Platform Installer Application Gallery
 
         // moved down to IIs60
+
+        override public bool CheckLoadUserProfile()
+        {
+            using (var srvman = new ServerManager())
+            {
+                return srvman.ApplicationPools["WebsitePanel Server"].ProcessModel.LoadUserProfile;
+            }
+
+        }
+
+        override public void EnableLoadUserProfile()
+        {
+            using (var srvman = new ServerManager())
+            {
+                srvman.ApplicationPools["WebsitePanel Server"].ProcessModel.LoadUserProfile = true;
+                // save changes
+                srvman.CommitChanges();
+            }
+        }
+
 
         #endregion
 	}

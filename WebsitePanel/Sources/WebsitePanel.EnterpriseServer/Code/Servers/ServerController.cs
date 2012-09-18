@@ -1588,8 +1588,8 @@ namespace WebsitePanel.EnterpriseServer
                 return BusinessErrorCodes.ERROR_RESTRICTED_DOMAIN;
             else
                 return checkDomainResult;
-        }        
-        
+        }
+
         public static List<DomainInfo> GetDomains(int packageId, bool recursive)
         {
             return ObjectUtils.CreateListFromDataSet<DomainInfo>(
@@ -1729,7 +1729,7 @@ namespace WebsitePanel.EnterpriseServer
             int webSiteId = 0;
             if (webEnabled && createWebSite)
             {
-                webSiteId = WebServerController.AddWebSite(packageId, hostName, domainId, 0, createInstantAlias);
+                webSiteId = WebServerController.AddWebSite(packageId, hostName, domainId, 0, createInstantAlias, false);
 
                 if (webSiteId < 0)
                 {
@@ -2005,7 +2005,8 @@ namespace WebsitePanel.EnterpriseServer
                 }
 
                 // delete zone if required
-                DnsServerController.DeleteZone(domain.ZoneItemId);
+                if (!domain.IsDomainPointer)
+                    DnsServerController.DeleteZone(domain.ZoneItemId);
 
                 // delete domain
                 DataProvider.DeleteDomain(SecurityContext.User.UserId, domainId);
