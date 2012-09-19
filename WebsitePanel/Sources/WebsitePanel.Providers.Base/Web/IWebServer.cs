@@ -51,7 +51,7 @@ namespace WebsitePanel.Providers.Web
         ServerBinding[] GetSiteBindings(string siteId);
 		string CreateSite(WebSite site);
 		void UpdateSite(WebSite site);
-        void UpdateSiteBindings(string siteId, ServerBinding[] bindings);
+        void UpdateSiteBindings(string siteId, ServerBinding[] bindings, bool emptyBindingsAllowed);
 		void DeleteSite(string siteId);
 
 		// virtual directories
@@ -119,6 +119,8 @@ namespace WebsitePanel.Providers.Web
 
 
 		// web app gallery
+        bool CheckLoadUserProfile();
+        void EnableLoadUserProfile();
         void InitFeeds(int UserId, string[] feeds);
         void SetResourceLanguage(int UserId, string resourceLanguage);
 		bool IsMsDeployInstalled();
@@ -153,5 +155,7 @@ namespace WebsitePanel.Providers.Web
 		ResultObject DeleteCertificate(SSLCertificate certificate, WebSite website);
 		SSLCertificate ImportCertificate(WebSite website);
 		bool CheckCertificate(WebSite webSite);
-	}
+
+        
+    }
 }
