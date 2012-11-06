@@ -172,15 +172,20 @@ namespace WebsitePanel.EnterpriseServer
             return AddWebSite(packageId, hostName, domainId, ipAddressId, false, true);
         }
 
-        private static Regex regIP = new Regex(
-            @"(?<First>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?<Second>2[0-4]\d|25"
-            + @"[0-5]|[01]?\d\d?)\.(?<Third>2[0-4]\d|25[0-5]|[01]?\d\d?)\.(?"
-            + @"<Fourth>2[0-4]\d|25[0-5]|[01]?\d\d?)",
-            RegexOptions.IgnoreCase
-            | RegexOptions.CultureInvariant
-            | RegexOptions.IgnorePatternWhitespace
-            | RegexOptions.Compiled
-            );
+
+        private static bool IsValidIPAdddress(string addr)
+        {
+            System.Net.IPAddress ip;
+            if (System.Net.IPAddress.TryParse(addr, out ip)) 
+            {
+                return ((ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6) |
+                        (ip.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork));
+            }
+            else 
+            {
+                return false;
+            }
+        }
 
         public static int AddWebSite(int packageId, string hostName, int domainId, int packageAddressId,
             bool addInstantAlias, bool ignoreGlobalDNSRecords)
@@ -270,14 +275,23 @@ namespace WebsitePanel.EnterpriseServer
 
                 if (dedicatedIp)
                 {
-                     foreach (GlobalDnsRecord d in dnsRecords)
+                    foreach (GlobalDnsRecord d in dnsRecords)
                     {
-                         if (!string.IsNullOrEmpty(d.ExternalIP))
-                         {
-                            if (regIP.IsMatch(d.ExternalIP)) return BusinessErrorCodes.ERROR_GLOBALDNS_FOR_DEDICATEDIP;
-                         }
+                        if (!string.IsNullOrEmpty(d.ExternalIP))
+                        {
+                            if (!IsValidIPAdddress(d.ExternalIP)) return BusinessErrorCodes.ERROR_GLOBALDNS_FOR_DEDICATEDIP;
+                        }
                     }
-                } 
+                }
+                else
+                {
+                    if (domain.ZoneItemId > 0)
+                    {
+                        StringDictionary settings = ServerController.GetServiceSettings(serviceId);
+                        if (string.IsNullOrEmpty(settings["PublicSharedIP"]))
+                            return BusinessErrorCodes.ERROR_PUBLICSHAREDIP_FOR_SHAREDIP;
+                    }
+                }
 
                 // prepare site bindings
                 List<ServerBinding> bindings = new List<ServerBinding>();
@@ -681,7 +695,7 @@ namespace WebsitePanel.EnterpriseServer
             {
                 if (!string.IsNullOrEmpty(d.ExternalIP))
                 {
-                    if (regIP.IsMatch(d.ExternalIP)) return BusinessErrorCodes.ERROR_GLOBALDNS_FOR_DEDICATEDIP;
+                    if (!IsValidIPAdddress(d.ExternalIP)) return BusinessErrorCodes.ERROR_GLOBALDNS_FOR_DEDICATEDIP;
                 }
             }
 
@@ -695,7 +709,7 @@ namespace WebsitePanel.EnterpriseServer
 
                 // remove all web site pointers
                 DomainInfo domain = ServerController.GetDomain(siteItem.Name);
-                DomainInfo ZoneInfo = ServerController.GetDomain(domain.ZoneName);
+                DomainInfo ZoneInfo = ServerController.GetDomain(domain.DomainItemId);
 
                 if (ZoneInfo == null)
                     throw new Exception("Parent zone not found");
@@ -761,18 +775,38 @@ namespace WebsitePanel.EnterpriseServer
 
                 // associate IP with web site
                 ServerController.AddItemIPAddress(siteItemId, ipAddressId);
-               
+
+
+                string parentZone = domain.ZoneName;
+                if (string.IsNullOrEmpty(parentZone))
+                {
+                    DomainInfo parentDomain = ServerController.GetDomain(domain.DomainItemId);
+                    parentZone = parentDomain.DomainName;
+                }
+
 
                 AddWebSitePointer(siteItemId,
-                    (domain.DomainName.Replace("." + domain.ZoneName, "") == domain.ZoneName) ? "": domain.DomainName.Replace("." + domain.ZoneName,"")
+                    ((domain.DomainName.Replace("." + parentZone, "") == parentZone) |
+                    (domain.DomainName == parentZone))
+                    ? "" : domain.DomainName.Replace("." + parentZone, "")
                     , ZoneInfo.DomainId, true, true, true);
 
                 foreach (DomainInfo pointer in pointers)
                 {
-                    ZoneInfo = ServerController.GetDomain(pointer.ZoneName);
+                    string pointerParentZone = pointer.ZoneName;
+                    if (string.IsNullOrEmpty(pointerParentZone))
+                    {
+                        DomainInfo parentDomain = ServerController.GetDomain(pointer.DomainItemId);
+                        pointerParentZone = parentDomain.DomainName;
+                    }
+
+
+                    ZoneInfo = ServerController.GetDomain(pointerParentZone);
 
                     AddWebSitePointer(siteItemId,
-                        (pointer.DomainName.Replace("." + pointer.ZoneName, "") == pointer.ZoneName) ? "" : pointer.DomainName.Replace("." + pointer.ZoneName, "")
+                        ((pointer.DomainName.Replace("." + pointerParentZone, "") == pointerParentZone)  |
+                        (pointer.DomainName == pointerParentZone))
+                        ? "" : pointer.DomainName.Replace("." + pointerParentZone, "")
                         , ZoneInfo.DomainId, true, true, true);
                 }
 
@@ -839,6 +873,8 @@ namespace WebsitePanel.EnterpriseServer
             if (siteItem == null)
                 return BusinessErrorCodes.ERROR_WEB_SITE_PACKAGE_ITEM_NOT_FOUND;
 
+
+
             // place log record
             TaskManager.StartTask("WEB_SITE", "SWITCH_TO_SHARED_IP", siteItem.Name);
             TaskManager.ItemId = siteItemId;
@@ -848,10 +884,19 @@ namespace WebsitePanel.EnterpriseServer
                 IPAddressInfo ip;
 
                 DomainInfo domain = ServerController.GetDomain(siteItem.Name);
-                DomainInfo ZoneInfo = ServerController.GetDomain(domain.ZoneName);
+                DomainInfo ZoneInfo = ServerController.GetDomain(domain.DomainItemId);
 
                 if (ZoneInfo == null)
                     throw new Exception("Parent zone not found");
+
+
+                if (ZoneInfo.ZoneItemId > 0)
+                {
+                    StringDictionary settings = ServerController.GetServiceSettings(siteItem.ServiceId);
+                    if (string.IsNullOrEmpty(settings["PublicSharedIP"]))
+                        return BusinessErrorCodes.ERROR_PUBLICSHAREDIP_FOR_SHAREDIP;
+
+                }
 
                 //cleanup certificates
                 List<SSLCertificate> certificates = GetCertificatesForSite(siteItemId);
@@ -931,16 +976,35 @@ namespace WebsitePanel.EnterpriseServer
                 siteItem.SiteIPAddressId = 0;
                 PackageController.UpdatePackageItem(siteItem);
 
+                string parentZone = domain.ZoneName;
+                if (string.IsNullOrEmpty(parentZone))
+                {
+                    DomainInfo parentDomain = ServerController.GetDomain(domain.DomainItemId);
+                    parentZone = parentDomain.DomainName;
+                }
+
                 AddWebSitePointer(siteItemId,
-                    (domain.DomainName.Replace("." + domain.ZoneName, "") == domain.ZoneName) ? "" : domain.DomainName.Replace("." + domain.ZoneName, "")
+                    ((domain.DomainName.Replace("." + parentZone, "") == parentZone) |
+                    (domain.DomainName == parentZone))
+                    ? "" : domain.DomainName.Replace("." + parentZone, "")
                     , ZoneInfo.DomainId, true, true, true);
 
                 foreach (DomainInfo pointer in pointers)
                 {
-                    ZoneInfo = ServerController.GetDomain(pointer.ZoneName);
+                    string pointerParentZone = pointer.ZoneName;
+                    if (string.IsNullOrEmpty(pointerParentZone))
+                    {
+                        DomainInfo parentDomain = ServerController.GetDomain(pointer.DomainItemId);
+                        pointerParentZone = parentDomain.DomainName;
+                    }
+
+
+                    ZoneInfo = ServerController.GetDomain(pointerParentZone);
 
                     AddWebSitePointer(siteItemId,
-                        (pointer.DomainName.Replace("." + pointer.ZoneName, "") == pointer.ZoneName) ? "" : pointer.DomainName.Replace("." + pointer.ZoneName, "")
+                        ((pointer.DomainName.Replace("." + pointerParentZone, "") == pointerParentZone) |
+                        (pointer.DomainName == pointerParentZone))
+                        ? "" : pointer.DomainName.Replace("." + pointerParentZone, "")
                         , ZoneInfo.DomainId, true, true, true);
                 }
 
