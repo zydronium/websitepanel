@@ -1,4 +1,4 @@
-﻿USE [${install.database}]
+USE [${install.database}]
 GO
 
 -- update database version
