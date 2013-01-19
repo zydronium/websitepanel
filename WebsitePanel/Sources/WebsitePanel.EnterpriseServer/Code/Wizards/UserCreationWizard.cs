@@ -165,7 +165,7 @@ namespace WebsitePanel.EnterpriseServer
 
                 // create domain
                 int domainId = 0;
-                if ((createWebSite || createMailAccount) && !String.IsNullOrEmpty(domainName))
+                if ((createWebSite || createMailAccount || createZoneRecord) && !String.IsNullOrEmpty(domainName))
                 {
                     try
                     {
@@ -193,7 +193,7 @@ namespace WebsitePanel.EnterpriseServer
                     }
                 }
 
-                if (createWebSite && !String.IsNullOrEmpty(domainName))
+                if (createWebSite && (domainId > 0))
                 {
                     // create web site
                     try
@@ -252,7 +252,7 @@ namespace WebsitePanel.EnterpriseServer
                     }
                 }
 
-                if (createMailAccount && !String.IsNullOrEmpty(domainName))
+                if (createMailAccount && (domainId > 0))
                 {
                     // create default mailbox
                     try
@@ -310,25 +310,25 @@ namespace WebsitePanel.EnterpriseServer
                         // error while creating mail account
                         throw new Exception("Could not create mail account", ex);
                     }
+                }
 
-                    // Instant Alias / Temporary URL
-                    if (tempDomain && (domainId > 0))
+                // Instant Alias / Temporary URL
+                if (tempDomain && (domainId > 0))
+                {
+                    int instantAliasId = ServerController.CreateDomainInstantAlias("", domainId);
+                    if (instantAliasId < 0)
                     {
-                        int instantAliasId = ServerController.CreateDomainInstantAlias("", domainId);
-                        if (instantAliasId < 0)
-                        {
-                            // rollback wizard
-                            Rollback();
+                        // rollback wizard
+                        Rollback();
 
-                            return instantAliasId;
-                        }
+                        return instantAliasId;
                     }
+                }
 
-                    // Domain DNS Zone
-                    if (createZoneRecord && (domainId > 0))
-                    {
-                        ServerController.EnableDomainDns(domainId);
-                    }
+                // Domain DNS Zone
+                if (createZoneRecord && (domainId > 0))
+                {
+                    ServerController.EnableDomainDns(domainId);
                 }
             }
 
