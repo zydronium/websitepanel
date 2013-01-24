@@ -12,6 +12,20 @@ BEGIN
 END
 GO
 
+
+--- Fix on version 2.0
+DELETE FROM HostingPlanQuotas WHERE QuotaID = 340
+GO
+DELETE FROM HostingPlanQuotas WHERE QuotaID = 341
+GO
+DELETE FROM HostingPlanQuotas WHERE QuotaID = 342
+GO
+DELETE FROM HostingPlanQuotas WHERE QuotaID = 343
+GO
+DELETE FROM HostingPlanResources WHERE GroupID = 33
+GO
+
+
 -- Version 2.1 section
 IF NOT EXISTS (SELECT * FROM [dbo].[Providers] WHERE [DisplayName] = 'Hosted Microsoft Exchange Server 2013')
 BEGIN
@@ -25,16 +39,6 @@ GO
 
 
 IF NOT EXISTS (SELECT * FROM [dbo].[Quotas] WHERE [QuotaName] = 'Exchange2007.AllowLitigationHold')
-DELETE FROM HostingPlanQuotas WHERE QuotaID = 340
-GO
-DELETE FROM HostingPlanQuotas WHERE QuotaID = 341
-GO
-DELETE FROM HostingPlanQuotas WHERE QuotaID = 342
-GO
-DELETE FROM HostingPlanQuotas WHERE QuotaID = 343
-GO
-DELETE FROM HostingPlanResources WHERE GroupID = 33
-GO
 BEGIN
 INSERT [dbo].[Quotas]  ([QuotaID], [GroupID],[QuotaOrder], [QuotaName], [QuotaDescription], [QuotaTypeID], [ServiceQuota], [ItemTypeID]) VALUES (420, 12, 24,N'Exchange2007.AllowLitigationHold',N'Allow Litigation Hold',1, 0 , NULL)
 END
@@ -58,6 +62,13 @@ ALTER TABLE [dbo].[ExchangeMailboxPlans] ADD
 END
 GO
 
+IF NOT EXISTS(select 1 from sys.columns COLS INNER JOIN sys.objects OBJS ON OBJS.object_id=COLS.object_id and OBJS.type='U' AND OBJS.name='ExchangeMailboxPlans' AND COLS.name='LitigationHoldUrl')
+BEGIN
+ALTER TABLE [dbo].[ExchangeMailboxPlans] ADD
+	[LitigationHoldUrl] [nvarchar] (256) COLLATE Latin1_General_CI_AS NULL,
+	[LitigationHoldMsg] [nvarchar] (512) COLLATE Latin1_General_CI_AS NULL
+END
+GO
 
 
 
@@ -85,7 +96,9 @@ ALTER PROCEDURE [dbo].[AddExchangeMailboxPlan]
 	@MailboxPlanType int,
 	@AllowLitigationHold bit,
 	@RecoverableItemsWarningPct int,
-	@RecoverableItemsSpace int
+	@RecoverableItemsSpace int,
+	@LitigationHoldUrl nvarchar(256),
+	@LitigationHoldMsg nvarchar(512)
 )
 AS
 
@@ -123,7 +136,10 @@ INSERT INTO ExchangeMailboxPlans
 	MailboxPlanType,
 	AllowLitigationHold,
 	RecoverableItemsWarningPct,
-	RecoverableItemsSpace
+	RecoverableItemsSpace,
+	LitigationHoldUrl,
+	LitigationHoldMsg
+
 )
 VALUES
 (
@@ -147,7 +163,9 @@ VALUES
 	@MailboxPlanType,
 	@AllowLitigationHold,
 	@RecoverableItemsWarningPct,
-	@RecoverableItemsSpace
+	@RecoverableItemsSpace,
+	@LitigationHoldUrl,
+	@LitigationHoldMsg
 )
 
 SET @MailboxPlanId = SCOPE_IDENTITY()
@@ -185,7 +203,9 @@ ALTER PROCEDURE [dbo].[UpdateExchangeMailboxPlan]
 	@MailboxPlanType int,
 	@AllowLitigationHold bit,
 	@RecoverableItemsWarningPct int,
-	@RecoverableItemsSpace int
+	@RecoverableItemsSpace int,
+	@LitigationHoldUrl nvarchar(256),
+	@LitigationHoldMsg nvarchar(512)
 )
 AS
 
@@ -209,11 +229,89 @@ UPDATE ExchangeMailboxPlans SET
 	MailboxPlanType = @MailboxPlanType,
 	AllowLitigationHold = @AllowLitigationHold,
 	RecoverableItemsWarningPct = @RecoverableItemsWarningPct,
-	RecoverableItemsSpace = @RecoverableItemsSpace 
+	RecoverableItemsSpace = @RecoverableItemsSpace, 
+	LitigationHoldUrl = @LitigationHoldUrl,
+	LitigationHoldMsg = @LitigationHoldMsg
+
 WHERE MailboxPlanId = @MailboxPlanId
 
 RETURN
 	
+GO
+
+
+
+ALTER PROCEDURE [dbo].[GetExchangeMailboxPlan] 
+(
+	@MailboxPlanId int
+)
+AS
+SELECT
+	MailboxPlanId,
+	ItemID,
+	MailboxPlan,
+	EnableActiveSync,
+	EnableIMAP,
+	EnableMAPI,
+	EnableOWA,
+	EnablePOP,
+	IsDefault,
+	IssueWarningPct,
+	KeepDeletedItemsDays,
+	MailboxSizeMB,
+	MaxReceiveMessageSizeKB,
+	MaxRecipients,
+	MaxSendMessageSizeKB,
+	ProhibitSendPct,
+	ProhibitSendReceivePct,
+	HideFromAddressBook,
+	MailboxPlanType,
+	AllowLitigationHold,
+	RecoverableItemsWarningPct,
+	RecoverableItemsSpace,
+	LitigationHoldUrl,
+	LitigationHoldMsg
+FROM
+	ExchangeMailboxPlans
+WHERE
+	MailboxPlanId = @MailboxPlanId
+RETURN
+
+GO
+
+
+
+ALTER PROCEDURE [dbo].[GetExchangeOrganizationStatistics] 
+(
+	@ItemID int
+)
+AS
+
+IF -1 IN (SELECT B.MailboxSizeMB FROM ExchangeAccounts AS A INNER JOIN ExchangeMailboxPlans AS B ON A.MailboxPlanId = B.MailboxPlanId WHERE A.ItemID=@ItemID)
+BEGIN
+SELECT
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE (AccountType = 1 OR AccountType = 5 OR AccountType = 6) AND ItemID = @ItemID) AS CreatedMailboxes,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 2 AND ItemID = @ItemID) AS CreatedContacts,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 3 AND ItemID = @ItemID) AS CreatedDistributionLists,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 4 AND ItemID = @ItemID) AS CreatedPublicFolders,
+	(SELECT COUNT(*) FROM ExchangeOrganizationDomains WHERE ItemID = @ItemID) AS CreatedDomains,
+	(SELECT MIN(B.MailboxSizeMB) FROM ExchangeAccounts AS A INNER JOIN ExchangeMailboxPlans AS B ON A.MailboxPlanId = B.MailboxPlanId WHERE A.ItemID=@ItemID) AS UsedDiskSpace,
+	(SELECT MIN(B.RecoverableItemsSpace) FROM ExchangeAccounts AS A INNER JOIN ExchangeMailboxPlans AS B ON A.MailboxPlanId = B.MailboxPlanId WHERE A.ItemID=@ItemID) AS UsedLitigationHoldSpace	
+END
+ELSE
+BEGIN
+SELECT
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE (AccountType = 1 OR AccountType = 5 OR AccountType = 6) AND ItemID = @ItemID) AS CreatedMailboxes,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 2 AND ItemID = @ItemID) AS CreatedContacts,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 3 AND ItemID = @ItemID) AS CreatedDistributionLists,
+	(SELECT COUNT(*) FROM ExchangeAccounts WHERE AccountType = 4 AND ItemID = @ItemID) AS CreatedPublicFolders,
+	(SELECT COUNT(*) FROM ExchangeOrganizationDomains WHERE ItemID = @ItemID) AS CreatedDomains,
+	(SELECT SUM(B.MailboxSizeMB) FROM ExchangeAccounts AS A INNER JOIN ExchangeMailboxPlans AS B ON A.MailboxPlanId = B.MailboxPlanId WHERE A.ItemID=@ItemID) AS UsedDiskSpace,
+	(SELECT SUM(B.RecoverableItemsSpace) FROM ExchangeAccounts AS A INNER JOIN ExchangeMailboxPlans AS B ON A.MailboxPlanId = B.MailboxPlanId WHERE A.ItemID=@ItemID) AS UsedLitigationHoldSpace	
+END
+
+
+RETURN
 GO
 
 
@@ -315,4 +413,10 @@ exec sp_xml_removedocument @idoc
 
 COMMIT TRAN
 RETURN 
+GO
+
+IF NOT EXISTS (SELECT * FROM [dbo].[Providers] WHERE [DisplayName] = 'Hosted MS CRM 2011')
+BEGIN
+INSERT [dbo].[Providers] ([ProviderID], [GroupID], [ProviderName], [DisplayName], [ProviderType], [EditorControl], [DisableAutoDiscovery]) VALUES (1201, 21, N'CRM', N'Hosted MS CRM 2011', N'WebsitePanel.Providers.HostedSolution.CRMProvider2011, WebsitePanel.Providers.HostedSolution', N'CRM', NULL)
+END
 GO
