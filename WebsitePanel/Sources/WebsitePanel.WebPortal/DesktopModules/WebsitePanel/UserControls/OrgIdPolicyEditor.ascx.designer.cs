@@ -1,4 +1,4 @@
-// Copyright (c) 2012, Outercurve Foundation.
+﻿// Copyright (c) 2012, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -35,135 +35,72 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WebsitePanel.Portal {
+namespace WebsitePanel.Portal.UserControls {
     
     
-    public partial class WebSitesHeliconApeControl {
+    public partial class OrgIdPolicyEditor {
         
         /// <summary>
-        /// HeliconApeFoldersPanel control.
+        /// OrgIdPolicyPanel control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel HeliconApeFoldersPanel;
+        protected global::System.Web.UI.UpdatePanel OrgIdPolicyPanel;
         
         /// <summary>
-        /// btnAddHeliconApeFolder control.
+        /// enablePolicyCheckBox control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnAddHeliconApeFolder;
+        protected global::System.Web.UI.WebControls.CheckBox enablePolicyCheckBox;
         
         /// <summary>
-        /// gvHeliconApeFolders control.
+        /// PolicyTable control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvHeliconApeFolders;
+        protected global::System.Web.UI.HtmlControls.HtmlTable PolicyTable;
         
         /// <summary>
-        /// btnAddHeliconApeUser control.
+        /// lblMaximumLength control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnAddHeliconApeUser;
+        protected global::System.Web.UI.WebControls.Label lblMaximumLength;
         
         /// <summary>
-        /// gvHeliconApeUsers control.
+        /// txtMaximumLength control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvHeliconApeUsers;
+        protected global::System.Web.UI.WebControls.TextBox txtMaximumLength;
         
         /// <summary>
-        /// Label1 control.
+        /// valRequireMaxLength control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label Label1;
+        protected global::System.Web.UI.WebControls.RequiredFieldValidator valRequireMaxLength;
         
         /// <summary>
-        /// btnAddHeliconApeGroup control.
+        /// valCorrectMaxLength control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnAddHeliconApeGroup;
-        
-        /// <summary>
-        /// gvHeliconApeGroups control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvHeliconApeGroups;
-        
-        /// <summary>
-        /// panelHeliconApeIsNotInstalledMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel panelHeliconApeIsNotInstalledMessage;
-        
-        /// <summary>
-        /// Localize1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Localize Localize1;
-        
-        /// <summary>
-        /// panelHeliconApeIsNotEnabledMessage control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Panel panelHeliconApeIsNotEnabledMessage;
-        
-        /// <summary>
-        /// Localize2 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Localize Localize2;
-        
-        /// <summary>
-        /// btnToggleHeliconApe control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnToggleHeliconApe;
-        
-        /// <summary>
-        /// HyperLink1 control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.HyperLink HyperLink1;
+        protected global::System.Web.UI.WebControls.RegularExpressionValidator valCorrectMaxLength;
     }
 }

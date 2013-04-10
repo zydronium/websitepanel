@@ -1,4 +1,4 @@
-// Copyright (c) 2012, Outercurve Foundation.
+﻿// Copyright (c) 2012, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,25 +26,70 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE)  ARISING  IN  ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using WebsitePanel.EnterpriseServer;
+using System;
+using System.Text;
+using System.Web.UI;
 
-namespace WebsitePanel.Portal
+namespace WebsitePanel.Portal.UserControls
 {
-    public partial class SettingsExchangePolicy : WebsitePanelControlBase, IUserSettingsEditorControl
+    public partial class OrgIdPolicyEditor : UserControl
     {
-        #region IUserSettingsEditorControl Members
+        #region Properties
 
-        public void BindSettings(UserSettings settings)
+        public string Value
         {
-            // mailbox
-            mailboxPasswordPolicy.Value = settings["MailboxPasswordPolicy"];
-            orgIdPolicy.Value = settings["OrgIdPolicy"];
+            get
+            {
+                var sb = new StringBuilder();
+                sb.Append(enablePolicyCheckBox.Checked.ToString()).Append(";");
+                sb.Append(txtMaximumLength.Text).Append(";");
+
+                return sb.ToString();
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value))
+                {
+                    enablePolicyCheckBox.Checked = true;
+                    txtMaximumLength.Text = "128";
+                }
+                else
+                {
+                    try
+                    {
+                        string[] parts = value.Split(';');
+                        enablePolicyCheckBox.Checked = Utils.ParseBool(parts[0], false);
+                        txtMaximumLength.Text = parts[1];
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                ToggleControls();
+            }
         }
 
-        public void SaveSettings(UserSettings settings)
+        #endregion
+
+        #region Methods
+
+        protected void Page_Load(object sender, EventArgs e)
         {
-            settings["MailboxPasswordPolicy"] = mailboxPasswordPolicy.Value;
-            settings["OrgIdPolicy"] = orgIdPolicy.Value;
+        }
+
+        private void ToggleControls()
+        {
+            PolicyTable.Visible = enablePolicyCheckBox.Checked;
+        }
+
+        #endregion
+
+        #region Event Handlers
+
+        protected void EnablePolicy_CheckedChanged(object sender, EventArgs e)
+        {
+            ToggleControls();
         }
 
         #endregion

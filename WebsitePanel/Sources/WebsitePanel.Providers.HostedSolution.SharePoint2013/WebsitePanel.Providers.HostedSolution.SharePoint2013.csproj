@@ -4,20 +4,19 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E5DB0722-CDC2-4D7F-8EEB-563578085FA7}</ProjectGuid>
+    <ProjectGuid>{24762DC8-6078-4F10-A524-C94ED59BD5D1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WebsitePanel.Providers.HostedSolution.Crm2011</RootNamespace>
-    <AssemblyName>WebsitePanel.Providers.HostedSolution.Crm2011</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <RootNamespace>WebsitePanel.Providers.HostedSolution.SharePoint2013</RootNamespace>
+    <AssemblyName>WebsitePanel.Providers.HostedSolution.SharePoint2013</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\WebsitePanel.Server\bin\Crm2011\</OutputPath>
+    <OutputPath>..\WebsitePanel.Server\bin\Sharepoint2013\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -25,48 +24,21 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>..\WebsitePanel.Server\bin\Crm2011\</OutputPath>
+    <OutputPath>..\WebsitePanel.Server\bin\Sharepoint2013\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="microsoft.crm.sdk.proxy">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.crm.sdk.proxy.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.client">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.client.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.client.codegeneration">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.client.codegeneration.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.portal">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.portal.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.portal.files">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.portal.files.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.sdk">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.sdk.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.sdk.deployment">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.sdk.deployment.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="microsoft.xrm.sdk.workflow">
-      <HintPath>..\..\Lib\References\Microsoft\microsoft.xrm.sdk.workflow.dll</HintPath>
+    <Reference Include="Microsoft.SharePoint, Version=15.0.0.0, Culture=neutral, PublicKeyToken=71e9bce111e9429c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lib\References\Microsoft\Microsoft.SharePoint.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Runtime.Serialization" />
-    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.Management.Automation, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -74,8 +46,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CRMProvider2011.cs" />
-    <Compile Include="myorganizationcrmsdktypes.cs" />
+    <Compile Include="HostedSharePointServer2013.cs" />
+    <Compile Include="HostedSharePointServer2013Impl.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
