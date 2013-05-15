@@ -1914,22 +1914,27 @@ namespace WebsitePanel.Providers.Web
 
         private bool IsHeliconApeEnabled(ServerManager srvman, string siteId)
         {
-            WebSite webSite = null;
-            webSite = webObjectsSvc.GetWebSiteFromIIS(srvman, siteId);
-            if (webSite == null)
-                throw new ApplicationException(
-                    String.Format("Could not find a web site with the following identifier: {0}.", siteId));
-
-            // Fill ASP.NET settings
-            FillAspNetSettingsFromIISObject(srvman, webSite);
-
-            var aphl = new WebAppPoolHelper(ProviderSettings);
-            var currentPool = aphl.match_webapp_pool(webSite);
-
-            if (aphl.pipeline(currentPool.Mode) != SiteAppPoolMode.Integrated)
+            if (!string.IsNullOrEmpty(siteId))
             {
-                // Ape is not working in not Integrated pipeline mode
-                return false;
+                // Check the web site app pool in integrated pipeline mode
+
+                WebSite webSite = null;
+                webSite = webObjectsSvc.GetWebSiteFromIIS(srvman, siteId);
+                if (webSite == null)
+                    throw new ApplicationException(
+                        String.Format("Could not find a web site with the following identifier: {0}.", siteId));
+
+                // Fill ASP.NET settings
+                FillAspNetSettingsFromIISObject(srvman, webSite);
+
+                var aphl = new WebAppPoolHelper(ProviderSettings);
+                var currentPool = aphl.match_webapp_pool(webSite);
+
+                if (aphl.pipeline(currentPool.Mode) != SiteAppPoolMode.Integrated)
+                {
+                    // Ape is not working in not Integrated pipeline mode
+                    return false;
+                }
             }
 
 
@@ -1960,7 +1965,7 @@ namespace WebsitePanel.Providers.Web
 		public new void GrantWebDeployPublishingAccess(string siteName, string accountName, string accountPassword)
 		{
 			// Web Publishing Access feature requires FullControl permissions on the web site's wwwroot folder
-			GrantWebManagementAccessInternally(siteName, accountName, accountPassword, NTFSPermission.FullControl);
+			//GrantWebManagementAccessInternally(siteName, accountName, accountPassword, NTFSPermission.FullControl);
 			//
 			EnforceDelegationRulesRestrictions(siteName, accountName);
 		}
@@ -1974,7 +1979,7 @@ namespace WebsitePanel.Providers.Web
 		public new void RevokeWebDeployPublishingAccess(string siteName, string accountName)
 		{
 			// Web Publishing Access feature requires FullControl permissions on the web site's wwwroot folder
-			RevokeWebManagementAccess(siteName, accountName);
+			//RevokeWebManagementAccess(siteName, accountName);
 			//
 			RemoveDelegationRulesRestrictions(siteName, accountName);
 		}
@@ -3829,7 +3834,7 @@ namespace WebsitePanel.Providers.Web
 			else
 			{
 				//
-				SystemUser user = SecurityUtils.GetUser(accountName, ServerSettings, String.Empty);
+				SystemUser user = SecurityUtils.GetUser(GetNonQualifiedAccountName(accountName), ServerSettings, String.Empty);
 				//
 				user.Password = accountPassword;
 				//
@@ -3872,14 +3877,14 @@ namespace WebsitePanel.Providers.Web
                     if (adEnabled)
                     {
                         ManagementAuthorization.Revoke(GetFullQualifiedAccountName(accountName), fqWebPath);
-                        SecurityUtils.RemoveNtfsPermissions(contentPath, accountName, ServerSettings, UsersOU, GroupsOU);
-                        SecurityUtils.DeleteUser(accountName, ServerSettings, UsersOU);
+                        SecurityUtils.RemoveNtfsPermissions(contentPath, GetNonQualifiedAccountName(accountName), ServerSettings, UsersOU, GroupsOU);
+                        SecurityUtils.DeleteUser(GetNonQualifiedAccountName(accountName), ServerSettings, UsersOU);
                     }
                     else
                     {
                         ManagementAuthorization.Revoke(GetFullQualifiedAccountName(accountName), fqWebPath);
-                        SecurityUtils.RemoveNtfsPermissions(contentPath, accountName, ServerSettings, String.Empty, String.Empty);
-                        SecurityUtils.DeleteUser(accountName, ServerSettings, String.Empty);
+                        SecurityUtils.RemoveNtfsPermissions(contentPath, GetNonQualifiedAccountName(accountName), ServerSettings, String.Empty, String.Empty);
+                        SecurityUtils.DeleteUser(GetNonQualifiedAccountName(accountName), ServerSettings, String.Empty);
                     }
                 }
                 // Restore setting back
