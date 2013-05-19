@@ -39,7 +39,7 @@ namespace WebsitePanel.Portal {
     
     
     public partial class WebSitesEditSite {
-
+        
         /// <summary>
         /// asyncTasks control.
         /// </summary>
@@ -48,7 +48,7 @@ namespace WebsitePanel.Portal {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::WebsitePanel.Portal.EnableAsyncTasksSupport asyncTasks;
-
+        
         /// <summary>
         /// WDeployBuildPublishingProfileWizardPanel control.
         /// </summary>
@@ -57,7 +57,7 @@ namespace WebsitePanel.Portal {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel WDeployBuildPublishingProfileWizardPanel;
-
+        
         /// <summary>
         /// WDeployPubProfilePanel control.
         /// </summary>
@@ -417,6 +417,15 @@ namespace WebsitePanel.Portal {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Literal litAppPoolStatus;
+        
+        /// <summary>
+        /// AppPoolRestartPanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel AppPoolRestartPanel;
         
         /// <summary>
         /// cmdAppPoolStart control.
