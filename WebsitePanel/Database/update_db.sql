@@ -1637,6 +1637,13 @@ IF NOT EXISTS (SELECT * FROM [dbo].[Quotas] WHERE ([QuotaName] = N'Exchange2007.
 BEGIN
 INSERT [dbo].[Quotas] ([QuotaID], [GroupID], [QuotaOrder], [QuotaName], [QuotaDescription], [QuotaTypeID], [ServiceQuota], [ItemTypeID], [HideQuota]) VALUES (422, 12, 26, N'Exchange2007.DisclaimersAllowed', N'Disclaimers Allowed', 1, 0, NULL, NULL)   
 END
+GO
+
+--add SecurityGroupManagement Quota
+IF NOT EXISTS (SELECT * FROM [dbo].[Quotas] WHERE [QuotaName] = 'HostedSolution.SecurityGroupManagement')
+BEGIN
+INSERT [dbo].[Quotas]  ([QuotaID], [GroupID],[QuotaOrder], [QuotaName], [QuotaDescription], [QuotaTypeID], [ServiceQuota], [ItemTypeID], [HideQuota]) VALUES (423, 13, 5, N'HostedSolution.SecurityGroupManagement', N'Allow Security Group Management', 1, 0, NULL, NULL)
+END
 GO  
 
 -- Lync Enterprise Voice
@@ -2098,3 +2105,133 @@ AS
 
 
 
+
+ALTER PROCEDURE [dbo].[SearchExchangeAccounts]
+(
+	@ActorID int,
+	@ItemID int,
+	@IncludeMailboxes bit,
+	@IncludeContacts bit,
+	@IncludeDistributionLists bit,
+	@IncludeRooms bit,
+	@IncludeEquipment bit,
+	@IncludeSecurityGroups bit,
+	@FilterColumn nvarchar(50) = '',
+	@FilterValue nvarchar(50) = '',
+	@SortColumn nvarchar(50)
+)
+AS
+DECLARE @PackageID int
+SELECT @PackageID = PackageID FROM ServiceItems
+WHERE ItemID = @ItemID
+
+-- check rights
+IF dbo.CheckActorPackageRights(@ActorID, @PackageID) = 0
+RAISERROR('You are not allowed to access this package', 16, 1)
+
+-- start
+DECLARE @condition nvarchar(700)
+SET @condition = '
+((@IncludeMailboxes = 1 AND EA.AccountType = 1)
+OR (@IncludeContacts = 1 AND EA.AccountType = 2)
+OR (@IncludeDistributionLists = 1 AND EA.AccountType = 3)
+OR (@IncludeRooms = 1 AND EA.AccountType = 5)
+OR (@IncludeEquipment = 1 AND EA.AccountType = 6)
+OR (@IncludeSecurityGroups = 1 AND EA.AccountType = 8))
+AND EA.ItemID = @ItemID
+'
+
+IF @FilterColumn <> '' AND @FilterColumn IS NOT NULL
+AND @FilterValue <> '' AND @FilterValue IS NOT NULL
+SET @condition = @condition + ' AND ' + @FilterColumn + ' LIKE ''' + @FilterValue + ''''
+
+IF @SortColumn IS NULL OR @SortColumn = ''
+SET @SortColumn = 'EA.DisplayName ASC'
+
+DECLARE @sql nvarchar(3500)
+
+set @sql = '
+SELECT
+	EA.AccountID,
+	EA.ItemID,
+	EA.AccountType,
+	EA.AccountName,
+	EA.DisplayName,
+	EA.PrimaryEmailAddress,
+	EA.MailEnabledPublicFolder,
+	EA.SubscriberNumber,
+	EA.UserPrincipalName
+FROM ExchangeAccounts AS EA
+WHERE ' + @condition
+
+print @sql
+
+exec sp_executesql @sql, N'@ItemID int, @IncludeMailboxes int, @IncludeContacts int,
+    @IncludeDistributionLists int, @IncludeRooms bit, @IncludeEquipment bit, @IncludeSecurityGroups bit',
+@ItemID, @IncludeMailboxes, @IncludeContacts, @IncludeDistributionLists, @IncludeRooms, @IncludeEquipment, @IncludeSecurityGroups
+
+RETURN
+GO
+
+CREATE PROCEDURE [dbo].[SearchExchangeAccountsByTypes]
+(
+	@ActorID int,
+	@ItemID int,
+	@AccountTypes nvarchar(30),
+	@FilterColumn nvarchar(50) = '',
+	@FilterValue nvarchar(50) = '',
+	@SortColumn nvarchar(50)
+)
+AS
+
+DECLARE @PackageID int
+SELECT @PackageID = PackageID FROM ServiceItems
+WHERE ItemID = @ItemID
+
+-- check rights
+IF dbo.CheckActorPackageRights(@ActorID, @PackageID) = 0
+RAISERROR('You are not allowed to access this package', 16, 1)
+
+DECLARE @condition nvarchar(700)
+SET @condition = 'EA.ItemID = @ItemID AND EA.AccountType IN (' + @AccountTypes + ')'
+
+IF @FilterColumn <> '' AND @FilterColumn IS NOT NULL
+AND @FilterValue <> '' AND @FilterValue IS NOT NULL
+BEGIN
+	IF @FilterColumn = 'PrimaryEmailAddress' AND @AccountTypes <> '2'
+	BEGIN		
+		SET @condition = @condition + ' AND EA.AccountID IN (SELECT EAEA.AccountID FROM ExchangeAccountEmailAddresses EAEA WHERE EAEA.EmailAddress LIKE ''' + @FilterValue + ''')'
+	END
+	ELSE
+	BEGIN		
+		SET @condition = @condition + ' AND ' + @FilterColumn + ' LIKE ''' + @FilterValue + ''''
+	END
+END
+
+IF @SortColumn IS NULL OR @SortColumn = ''
+SET @SortColumn = 'EA.DisplayName ASC'
+
+DECLARE @sql nvarchar(3500)
+SET @sql = '
+SELECT
+	EA.AccountID,
+	EA.ItemID,
+	EA.AccountType,
+	EA.AccountName,
+	EA.DisplayName,
+	EA.PrimaryEmailAddress,
+	EA.MailEnabledPublicFolder,
+	EA.MailboxPlanId,
+	P.MailboxPlan, 
+	EA.SubscriberNumber,
+	EA.UserPrincipalName
+FROM
+	ExchangeAccounts  AS EA
+LEFT OUTER JOIN ExchangeMailboxPlans AS P ON EA.MailboxPlanId = P.MailboxPlanId
+	WHERE ' + @condition
+	+ ' ORDER BY ' + @SortColumn
+
+EXEC sp_executesql @sql, N'@ItemID int', @ItemID
+
+RETURN
+GO
