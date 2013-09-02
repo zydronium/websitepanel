@@ -3407,7 +3407,7 @@ namespace WebsitePanel.EnterpriseServer
                 ExchangeDistributionList dl = exchange.GetDistributionListGeneralSettings(accountName);
 
                 // add meta-item
-                int accountId = AddAccount(itemId, ExchangeAccountType.DistributionList, email,
+                int accountId = AddAccount(itemId, ExchangeAccountType.DistributionList, accountName,
                     displayName, email, false,
                     0, dl.SAMAccountName, null, 0, null);
 
@@ -3993,7 +3993,8 @@ namespace WebsitePanel.EnterpriseServer
                 List<ExchangeAccount> DistributionLists = GetAccounts(itemId, ExchangeAccountType.DistributionList);
                 foreach (ExchangeAccount DistributionAccount in DistributionLists)
                 {
-                    ExchangeDistributionList DistributionList = exchange.GetDistributionListGeneralSettings(DistributionAccount.AccountName);
+                    //ExchangeDistributionList DistributionList = exchange.GetDistributionListGeneralSettings(DistributionAccount.AccountName);
+                    OrganizationSecurityGroup DistributionList = OrganizationController.GetSecurityGroupGeneralSettings(itemId, DistributionAccount.AccountId);
 
                     foreach (ExchangeAccount member in DistributionList.MembersAccounts)
                     {
