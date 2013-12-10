@@ -397,7 +397,7 @@ namespace WebsitePanel.EnterpriseServer
                 {
                     foreach (AdditionalGroup additionalGroup in GetAdditionalGroups(settings.UserId))
                     {
-                        string additionalGroupName = BuildAccountNameWithOrgId(org.OrganizationId, additionalGroup.GroupName.Replace(" ", ""), org.ServiceId);
+                        string additionalGroupName = BuildAccountNameEx(org, additionalGroup.GroupName.Replace(" ", ""));
 
                         if (orgProxy.CreateSecurityGroup(org.OrganizationId, additionalGroupName) == 0)
                         {
@@ -1383,7 +1383,7 @@ namespace WebsitePanel.EnterpriseServer
                     return BusinessErrorCodes.ERROR_EXCHANGE_EMAIL_EXISTS;
 
                 // load organization
-                Organization org = GetOrganization(itemId);
+                WebsitePanel.Providers.HostedSolution.Organization org = GetOrganization(itemId);
 
                 if (org == null)
                 {
@@ -1408,7 +1408,7 @@ namespace WebsitePanel.EnterpriseServer
                 Organizations orgProxy = GetOrganizationProxy(org.ServiceId);
 
                 string upn = string.Format("{0}@{1}", name, domain);
-                string sAMAccountName = AppendOrgId(serviceSettings) ? BuildAccountNameWithOrgId(org.OrganizationId, name, org.ServiceId) : BuildAccountName(org.OrganizationId, name, org.ServiceId);
+                string sAMAccountName = BuildAccountNameEx(org, name);                    
 
                 TaskManager.Write("accountName :" + sAMAccountName);
                 TaskManager.Write("upn :" + upn);
@@ -1445,6 +1445,15 @@ namespace WebsitePanel.EnterpriseServer
 
             return userId;
         }
+
+
+        public static string BuildAccountNameEx(Organization org, string name)
+        {
+            StringDictionary serviceSettings = ServerController.GetServiceSettings(org.ServiceId);
+            
+            return AppendOrgId(serviceSettings) ? BuildAccountNameWithOrgId(org.OrganizationId, name, org.ServiceId) : BuildAccountName(org.OrganizationId, name, org.ServiceId);
+        }
+
 
         /// <summary> Checks should or not user name include organization id. </summary>
         /// <param name="serviceSettings"> The service settings. </param>
@@ -2370,8 +2379,8 @@ namespace WebsitePanel.EnterpriseServer
 
                 Organizations orgProxy = GetOrganizationProxy(org.ServiceId);
 
-                string groupName = BuildAccountNameWithOrgId(org.OrganizationId, displayName.Replace(" ", ""), org.ServiceId);
-
+                string groupName = BuildAccountNameEx(org, displayName.Replace(" ", ""));
+                    
                 TaskManager.Write("accountName :" + groupName);
 
                 if (orgProxy.CreateSecurityGroup(org.OrganizationId, groupName) == 0)

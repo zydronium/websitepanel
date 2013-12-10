@@ -2604,6 +2604,15 @@ BEGIN
 END
 GO
 
+-- DNS.2013
+
+IF NOT EXISTS ( SELECT * FROM [dbo].[Providers] WHERE [ProviderID] = 410 )
+BEGIN
+	INSERT [dbo].[Providers] ([ProviderID], [GroupID], [ProviderName], [DisplayName], [ProviderType], [EditorControl], [DisableAutoDiscovery]) VALUES
+	(410, 7, N'MSDNS.2012', N'Microsoft DNS Server 2012+', N'WebsitePanel.Providers.DNS.MsDNS2012, WebsitePanel.Providers.DNS.MsDNS2012', N'MSDNS', NULL)
+END
+GO
+
 -- CRM Provider fix
 
 UPDATE Providers SET EditorControl = 'CRM2011' Where ProviderID = 1201;
@@ -2731,7 +2740,7 @@ WHERE
 END
 GO
 
-
+IF NOT EXISTS (SELECT * FROM [dbo].[Providers] WHERE [DisplayName] = 'MySQL Server 5.6')
 
 -- CRM Quota
 
