@@ -140,6 +140,33 @@ namespace WebsitePanel.Portal.ProviderControls {
         protected global::System.Web.UI.WebControls.TextBox txtMailboxDatabase;
         
         /// <summary>
+        /// archivingGroup control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableCell archivingGroup;
+        
+        /// <summary>
+        /// locArchivingDatabase control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Localize locArchivingDatabase;
+        
+        /// <summary>
+        /// txtArchivingDatabase control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtArchivingDatabase;
+        
+        /// <summary>
         /// locKeepDeletedItems control.
         /// </summary>
         /// <remarks>

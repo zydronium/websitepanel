@@ -6,6 +6,8 @@
 <%@ Register Src="../UserControls/EnableAsyncTasksSupport.ascx" TagName="EnableAsyncTasksSupport" TagPrefix="wsp" %>
 <%@ Register Src="../UserControls/QuotaEditor.ascx" TagName="QuotaEditor" TagPrefix="uc1" %>
 
+<%@ Import Namespace="WebsitePanel.Portal" %>
+
 <wsp:EnableAsyncTasksSupport id="asyncTasks" runat="server"/>
 
 <div id="ExchangeContainer">
@@ -16,10 +18,12 @@
 			<div class="Center">
 				<div class="Title">
 					<asp:Image ID="Image1" SkinID="ExchangeDomainNameAdd48" runat="server" />
-					<asp:Localize ID="locTitle" runat="server" meta:resourcekey="locTitle" Text="Add Mailboxplan"></asp:Localize>
+					<asp:Localize ID="locTitle" runat="server" Text="Add Mailboxplan"></asp:Localize>
 				</div>
 				<div class="FormBody">
 				    <wsp:SimpleMessageBox id="messageBox" runat="server" />
+
+                    <asp:HiddenField runat="server" ID="hfArchivingPlan" />
 
 					<wsp:CollapsiblePanel id="secMailboxPlan" runat="server"
                         TargetControlID="MailboxPlan" meta:resourcekey="secMailboxPlan" Text="Mailboxplan">
@@ -68,6 +72,11 @@
 						    <tr>
 							    <td>
 								    <asp:CheckBox ID="chkActiveSync" runat="server" meta:resourcekey="chkActiveSync" Text="ActiveSync"></asp:CheckBox>
+							    </td>
+						    </tr>
+						    <tr>
+							    <td>
+								    <asp:CheckBox ID="chkEnableArchiving" runat="server" meta:resourcekey="chkEnableArchiving" Text="Archiving"></asp:CheckBox>
 							    </td>
 						    </tr>
 						</table>
@@ -159,7 +168,6 @@
 						</table>
 					</asp:Panel>
 					
-					
 					<wsp:CollapsiblePanel id="secDeleteRetention" runat="server"
                         TargetControlID="DeleteRetention" meta:resourcekey="secDeleteRetention" Text="Delete Item Retention">
                     </wsp:CollapsiblePanel>
@@ -214,6 +222,39 @@
 						</table>
 					</asp:Panel>
 
+                    <wsp:CollapsiblePanel id="secRetentionPolicyTags" runat="server"
+                        TargetControlID="RetentionPolicyTags" meta:resourcekey="secRetentionPolicyTags" Text="Retention policy tags">
+                    </wsp:CollapsiblePanel>
+                    <asp:Panel ID="RetentionPolicyTags" runat="server" Height="0" style="overflow:hidden;">
+                        <asp:UpdatePanel ID="GeneralUpdatePanel" runat="server" UpdateMode="Conditional" ChildrenAsTriggers="true">
+                            <ContentTemplate>
+                            <asp:GridView id="gvPolicy" runat="server"  EnableViewState="true" AutoGenerateColumns="false"
+		                    Width="100%" EmptyDataText="" CssSelectorClass="NormalGridView" OnRowCommand="gvPolicy_RowCommand" >
+		                    <Columns>
+			                    <asp:TemplateField HeaderText="Tag">
+				                    <ItemStyle Width="70%"></ItemStyle>
+				                    <ItemTemplate>
+					                    <asp:Label id="displayPolicy" runat="server" EnableViewState="true" ><%# PortalAntiXSS.Encode((string)Eval("TagName"))%></asp:Label>
+                                    </ItemTemplate>
+			                    </asp:TemplateField>
+                                <asp:TemplateField>
+				                    <ItemTemplate>
+					                    &nbsp;<asp:ImageButton id="imgDelPolicy" runat="server" Text="Delete" SkinID="ExchangeDelete"
+						                    CommandName="DeleteItem" CommandArgument='<%# Eval("TagId") %>' 
+						                    meta:resourcekey="cmdDelete" OnClientClick="return confirm('Are you sure you want to delete selected policy tag?')" >
+					                          </asp:ImageButton>
+				                    </ItemTemplate>
+			                    </asp:TemplateField>
+		                    </Columns>
+	                        </asp:GridView>
+                            <br />
+
+                            <asp:DropDownList ID="ddTags" runat ="server"></asp:DropDownList>
+                            <asp:Button ID="bntAddTag" runat="server" Text="Add tag" meta:resourcekey="bntAddTag" OnClick="bntAddTag_Click"/>
+                            <br />
+                            </ContentTemplate>
+                        </asp:UpdatePanel>
+                    </asp:Panel>
 
 					<br />
 				    <div class="FormFooterClean">

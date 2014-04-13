@@ -572,6 +572,96 @@ namespace WebsitePanel.Portal.ExchangeServer {
         protected global::WebsitePanel.Portal.QuotaViewer crmDBSize;
         
         /// <summary>
+        /// crm2013StatsPanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel crm2013StatsPanel;
+        
+        /// <summary>
+        /// locCRM2013 control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Localize locCRM2013;
+        
+        /// <summary>
+        /// lnkProfessionalCRMUsers control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkProfessionalCRMUsers;
+        
+        /// <summary>
+        /// crmProfessionalUsersStats control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.QuotaViewer crmProfessionalUsersStats;
+        
+        /// <summary>
+        /// lnkBasicCRMUsers control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkBasicCRMUsers;
+        
+        /// <summary>
+        /// crmBasicUsersStats control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.QuotaViewer crmBasicUsersStats;
+        
+        /// <summary>
+        /// lnkEssentialCRMUsers control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkEssentialCRMUsers;
+        
+        /// <summary>
+        /// crmEssentialUsersStats control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.QuotaViewer crmEssentialUsersStats;
+        
+        /// <summary>
+        /// lnkCRM2013DBSize control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HyperLink lnkCRM2013DBSize;
+        
+        /// <summary>
+        /// crm2013DBSize control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.QuotaViewer crm2013DBSize;
+        
+        /// <summary>
         /// enterpriseStorageStatsPanel control.
         /// </summary>
         /// <remarks>

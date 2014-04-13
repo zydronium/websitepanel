@@ -12,7 +12,7 @@
 	<asp:GridView id="gvMailboxPlans" runat="server"  EnableViewState="true" AutoGenerateColumns="false"
 		Width="100%" EmptyDataText="gvMailboxPlans" CssSelectorClass="NormalGridView" OnRowCommand="gvMailboxPlan_RowCommand" >
 		<Columns>
-            <asp:TemplateField HeaderText="gvMailboxPlanEdit">
+            <asp:TemplateField HeaderText="Edit">
                 <ItemTemplate>
                     <asp:ImageButton ID="cmdEdit" runat="server" SkinID="EditSmall" CommandName="EditItem" AlternateText="Edit record" CommandArgument='<%# Eval("MailboxPlanId") %>' ></asp:ImageButton>
                 </ItemTemplate>
@@ -22,7 +22,7 @@
 					<asp:Image ID="img2" runat="server" Width="16px" Height="16px" ImageUrl='<%# GetPlanType((int)Eval("MailboxPlanType")) %>' ImageAlign="AbsMiddle" />
 				</ItemTemplate>
 			</asp:TemplateField>
-			<asp:TemplateField HeaderText="gvMailboxPlan">
+			<asp:TemplateField HeaderText="Policy">
 				<ItemStyle Width="70%"></ItemStyle>
 				<ItemTemplate>
 					<asp:Label id="lnkDisplayMailboxPlan" runat="server" EnableViewState="true" ><%# PortalAntiXSS.Encode((string)Eval("MailboxPlan"))%></asp:Label>
@@ -101,6 +101,11 @@
 				<tr>
 					<td>
 						<asp:CheckBox ID="chkActiveSync" runat="server" meta:resourcekey="chkActiveSync" Text="ActiveSync"></asp:CheckBox>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<asp:CheckBox ID="chkEnableArchiving" runat="server" meta:resourcekey="chkEnableArchiving" Text="Archiving"></asp:CheckBox>
 					</td>
 				</tr>
 			</table>
@@ -261,13 +266,13 @@
             <td>
                 <div class="FormButtonsBarClean">
                     <asp:Button ID="btnAddMailboxPlan" runat="server" meta:resourcekey="btnAddMailboxPlan"
-                        Text="Add New Mailboxplan" CssClass="Button1" OnClick="btnAddMailboxPlan_Click" />
+                        Text="Add New" CssClass="Button1" OnClick="btnAddMailboxPlan_Click" />
                 </div>
             </td>
             <td>
                 <div class="FormButtonsBarClean">
                         <asp:Button ID="btnUpdateMailboxPlan" runat="server" meta:resourcekey="btnUpdateMailboxPlan"
-                            Text="Update Mailboxplan" CssClass="Button1" OnClick="btnUpdateMailboxPlan_Click" />
+                            Text="Update" CssClass="Button1" OnClick="btnUpdateMailboxPlan_Click" />
             </td>
         </tr>
     </table>

@@ -35,7 +35,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-
 namespace WebsitePanel.Portal.ProviderControls {
     
     
@@ -166,5 +165,32 @@ namespace WebsitePanel.Portal.ProviderControls {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtPassword;
+        
+        /// <summary>
+        /// ddlCurrency control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlCurrency;
+        
+        /// <summary>
+        /// ddlCollation control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlCollation;
+        
+        /// <summary>
+        /// ddlBaseLanguage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlBaseLanguage;
     }
 }

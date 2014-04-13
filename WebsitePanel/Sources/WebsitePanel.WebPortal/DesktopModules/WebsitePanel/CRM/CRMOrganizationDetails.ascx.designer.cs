@@ -194,6 +194,24 @@ namespace WebsitePanel.Portal.CRM {
         protected global::System.Web.UI.WebControls.DropDownList ddlCollation;
         
         /// <summary>
+        /// lblBaseLanguage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblBaseLanguage;
+        
+        /// <summary>
+        /// ddlBaseLanguage control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlBaseLanguage;
+        
+        /// <summary>
         /// btnCreate control.
         /// </summary>
         /// <remarks>

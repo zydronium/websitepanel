@@ -48,6 +48,22 @@ namespace WebsitePanel.Portal.ExchangeServer {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::WebsitePanel.Portal.EnableAsyncTasksSupport asyncTasks;
+        /// breadcrumb control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.ExchangeServer.UserControls.Breadcrumb breadcrumb;
+        
+        /// <summary>
+        /// menu control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.ExchangeServer.UserControls.Menu menu;
         
         /// <summary>
         /// Image1 control.
@@ -95,6 +111,15 @@ namespace WebsitePanel.Portal.ExchangeServer {
         protected global::WebsitePanel.Portal.UserControls.SimpleMessageBox messageBox;
         
         /// <summary>
+        /// GeneralUpdatePanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel GeneralUpdatePanel;
+        
+        /// <summary>
         /// secGeneral control.
         /// </summary>
         /// <remarks>
@@ -111,15 +136,6 @@ namespace WebsitePanel.Portal.ExchangeServer {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel General;
-        
-        /// <summary>
-        /// GeneralUpdatePanel control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.UpdatePanel GeneralUpdatePanel;
         
         /// <summary>
         /// chkHideAddressBook control.
@@ -192,6 +208,60 @@ namespace WebsitePanel.Portal.ExchangeServer {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::WebsitePanel.Portal.QuotaViewer mailboxSize;
+        
+        /// <summary>
+        /// secArchiving control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.CollapsiblePanel secArchiving;
+        
+        /// <summary>
+        /// Archiving control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel Archiving;
+        
+        /// <summary>
+        /// chkArchiving control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.CheckBox chkArchiving;
+        
+        /// <summary>
+        /// mailboxArchivePlan control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlTableRow mailboxArchivePlan;
+        
+        /// <summary>
+        /// locRetentionPolicyName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Localize locRetentionPolicyName;
+        
+        /// <summary>
+        /// mailboxRetentionPolicySelector control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.ExchangeServer.UserControls.MailboxPlanSelector mailboxRetentionPolicySelector;
         
         /// <summary>
         /// secLitigationHoldSettings control.
