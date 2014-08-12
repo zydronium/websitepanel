@@ -27,11 +27,15 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Net;
 using WebsitePanel.Server.Utils;
+using Microsoft.Management.Infrastructure;
+
 
 namespace WebsitePanel.Providers.DNS
 {
@@ -224,6 +228,9 @@ namespace WebsitePanel.Providers.DNS
 				.Where( r => null != r )
 				.Where( r => r.RecordType != DnsRecordType.SOA )
 			//	.Where( r => !( r.RecordName == "@" && DnsRecordType.NS == r.RecordType ) )
+                .OrderBy( r => r.RecordName )
+                .ThenBy( r => r.RecordType )
+                .ThenBy( r => r.RecordData )
 				.ToArray();
 		}
 
@@ -299,17 +306,92 @@ namespace WebsitePanel.Providers.DNS
 			ps.RunPipeline( cmd );
 		}
 
-		public static void Remove_DnsServerResourceRecord( this PowerShellHelper ps, string zoneName, string Name, string type )
+		public static void Remove_DnsServerResourceRecord( this PowerShellHelper ps, string zoneName, string Name, string type, string recordData )
 		{
-			// Remove-DnsServerResourceRecord -ZoneName xxxx.com -Name "@" -RRType Soa -Force
+            if (String.IsNullOrEmpty(Name)) Name = "@";
+
 			var cmd = new Command( "Remove-DnsServerResourceRecord" );
 			cmd.addParam( "ZoneName", zoneName );
-			cmd.addParam( "Name", Name );
+            cmd.addParam( "Name", Name );
 			cmd.addParam( "RRType", type );
+
+            if (!String.IsNullOrEmpty(recordData))
+                cmd.addParam("RecordData", recordData);
+
 			cmd.addParam( "Force" );
 			ps.RunPipeline( cmd );
 		}
 
-		#endregion
+        public static void Update_DnsServerResourceRecordSOA(this PowerShellHelper ps, string zoneName,
+            TimeSpan ExpireLimit, TimeSpan MinimumTimeToLive, string PrimaryServer,
+            TimeSpan RefreshInterval, string ResponsiblePerson, TimeSpan RetryDelay, 
+            string PSComputerName)
+        {
+
+            var cmd = new Command("Get-DnsServerResourceRecord");
+            cmd.addParam("ZoneName", zoneName);
+            cmd.addParam("RRType", "SOA");
+            Collection<PSObject> soaRecords = ps.RunPipeline(cmd);
+
+            if (soaRecords.Count < 1)
+                return;
+
+            PSObject oldSOARecord = soaRecords[0];
+            PSObject newSOARecord = oldSOARecord.Copy();
+
+            CimInstance recordData = newSOARecord.Properties["RecordData"].Value as CimInstance;
+
+            if (recordData==null) return;
+            
+            if (ExpireLimit!=null)
+                recordData.CimInstanceProperties["ExpireLimit"].Value = ExpireLimit;
+
+            if (MinimumTimeToLive!=null)
+                recordData.CimInstanceProperties["MinimumTimeToLive"].Value = MinimumTimeToLive;
+
+            if (PrimaryServer!=null)
+                recordData.CimInstanceProperties["PrimaryServer"].Value = PrimaryServer;
+
+            if (RefreshInterval!=null)
+                recordData.CimInstanceProperties["RefreshInterval"].Value = RefreshInterval;
+
+            if (ResponsiblePerson!=null)
+                recordData.CimInstanceProperties["ResponsiblePerson"].Value = ResponsiblePerson;
+
+            if (RetryDelay!=null)
+                recordData.CimInstanceProperties["RetryDelay"].Value = RetryDelay;
+
+            if (PSComputerName!=null)
+                recordData.CimInstanceProperties["PSComputerName"].Value = PSComputerName;
+
+            UInt32 serialNumber = (UInt32)recordData.CimInstanceProperties["SerialNumber"].Value;
+
+            // update record's serial number
+            string sn = serialNumber.ToString();
+            string todayDate = DateTime.Now.ToString("yyyyMMdd");
+            if (sn.Length < 10 || !sn.StartsWith(todayDate))
+            {
+                // build a new serial number
+                sn = todayDate + "01";
+                serialNumber = UInt32.Parse(sn);
+            }
+            else
+            {
+                // just increment serial number
+                serialNumber += 1;
+            }
+
+            recordData.CimInstanceProperties["SerialNumber"].Value = serialNumber;
+
+            cmd = new Command("Set-DnsServerResourceRecord");
+            cmd.addParam("NewInputObject", newSOARecord);
+            cmd.addParam("OldInputObject", oldSOARecord);
+            cmd.addParam("Zone", zoneName);
+            ps.RunPipeline(cmd);
+
+        }
+
+        
+        #endregion
 	}
 }
