@@ -28,44 +28,40 @@
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /**
- * WebsitePanel Sync Addon Module
- * 
+ * WebsitePanel WHMCS WebsitePanel / WHMCS Client Contact Details Sync
+ *
  * @author Christopher York
- * @package WebsitePanel Sync Addon Module
- * @version v1.0
  * @link http://www.websitepanel.net/
+ * @access public
+ * @name websitepanel
+ * @version 3.0.4
+ * @package WHMCS
  */
 
 /**
- * websitepanel_sync_config
- * 
+ * Returns the WebsitePanel Sync configuration options
+ *
  * @access public
  * @return array
  */
 function websitepanel_sync_config()
 {
-    $configarray = array('name' => 'WebsitePanel Sync Automation',
-                         'description' => 'Syncs WHMCS client details / contact changes with WebsitePanel',
-                         'version' => '1.2',
-                         'author' => 'Christopher York',
-                         'fields' => array('serverhost' => array('FriendlyName', 'Enterprise Server Host', 'Type' => 'text', 'Size' => 25, 'Description' => 'Enterprise Server hostname / IP address', 'Default' => '127.0.0.1'),
-                                           'serverport' => array('FriendlyName', 'Enterprise Server Port', 'Type' => 'text', 'Size' => 4, 'Description' => 'Enterprise Server port', 'Default' => 9002),
-                                           'serversecured' => array('FriendlyName', 'Use Secured Connection', 'Type' => 'yesno', 'Description' => 'Tick to use SSL secured connection'),
-                                           )
-                        );
-    return $configarray;
+    return array('name' => 'WebsitePanel Sync Automation',
+                 'description' => 'Syncs WHMCS client details / contact changes with WebsitePanel accounts',
+                 'version' => '3.0.4',
+                 'author' => 'Christopher York');
 }
 
 /**
- * websitepanel_addons_upgrade
+ * Returns the WebsitePanel Sync configuration options
  *
- * @param $vars array
+ * @param $vars array WHMCS parameters
  * @access public
  * @return array
  */
 function websitepanel_sync_upgrade($vars)
 {
-
+    // Module version
     $version = $vars['version'];
 
     // Remove the WebsitePanel credentials

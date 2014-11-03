@@ -1,4 +1,5 @@
-// Copyright (c) 2014, Outercurve Foundation.
+<?php if (!defined('WHMCS')) exit('ACCESS DENIED');
+// Copyright (c) 2012, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,26 +27,16 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE)  ARISING  IN  ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-namespace WebsitePanel.Providers.Web.Iis.Common
-{
-    using System;
-    using System.Collections.Generic;
-    using System.Text;
-    using System.Web;
 
-    using Microsoft.Web.Administration;
-    using Microsoft.Web.Management.Server;
-
-	public abstract class ConfigurationModuleService
-    {
-        private const string ServerManagerContextKey = "ServerManagerContextKey";
-		/// <summary>
-		/// We'll use it in the future to implement management of web farm with shared configuration enabled
-		/// </summary>
-		/// <returns></returns>
-		protected internal ServerManager GetServerManager()
-		{
-			return new ServerManager();
-		}
-    }
-}
+/**
+ * WebsitePanel WHMCS Server Module Client Area Language
+ *
+ * @author Christopher York
+ * @link http://www.websitepanel.net/
+ * @access public
+ * @name websitepanel
+ * @version 3.0.0
+ * @package WHMCS
+ */
+$_MOD_LANG['websitepanel_clientarea_oneclicklogin'] = 'Login to Control Panel (One-Click Login)';
+$_MOD_LANG['websitepanel_adminarea_gotowebsitepanelaccount'] = 'View Account in WebsitePanel';

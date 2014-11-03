@@ -76,10 +76,10 @@ namespace WebsitePanel.Portal
 			set { ViewState["PackageId"] = value; }
 		}
 
-        private bool IsDedicatedIP
+        private bool AllowSsl
         {
-            get { return (bool)ViewState["IsDedicatedIP"]; }
-            set { ViewState["IsDedicatedIP"] = value; }
+            get { return (bool)ViewState["AllowSsl"]; }
+            set { ViewState["AllowSsl"] = value; }
         }
 
 		private bool IIs7
@@ -111,7 +111,7 @@ namespace WebsitePanel.Portal
 
             // remove "SSL" tab for a site with dynamic IP
             var sslTab = filteredTabs.SingleOrDefault(t => t.Id == "SSL");
-            if (!IsDedicatedIP && sslTab != null)
+            if (!AllowSsl && sslTab != null)
                 filteredTabs.Remove(sslTab);
 
             
@@ -277,15 +277,16 @@ namespace WebsitePanel.Portal
 			webSitesCustomErrorsControl.BindWebItem(site);
             webSitesHeliconZooControl.BindWebItem(site);
 
-            if (site.IsDedicatedIP)
+            // If SNI is enabled on the server, we do allow for SSL even if site not has dedicated Ip
+            if (site.IsDedicatedIP || site.SniEnabled)
             {
-                IsDedicatedIP = true;
+                AllowSsl = true;
                 WebsitesSSLControl.Visible = true;
                 WebsitesSSLControl.BindWebItem(site);
             }
             else
             {
-                IsDedicatedIP = false;
+                AllowSsl = false;
                 WebsitesSSLControl.Visible = false;
             }
 

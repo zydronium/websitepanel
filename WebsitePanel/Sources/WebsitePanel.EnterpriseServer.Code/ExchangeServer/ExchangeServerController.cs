@@ -586,6 +586,7 @@ namespace WebsitePanel.EnterpriseServer
                 List<ExchangeDomainName> acceptedDomains = GetOrganizationDomains(itemId);
 
                 int exchangeServiceId = GetExchangeServiceID(org.PackageId);
+
                 ExchangeServer exchange = GetExchangeServer(exchangeServiceId, org.ServiceId);
 
                 bool successful = exchange.DeleteOrganization(
@@ -598,6 +599,18 @@ namespace WebsitePanel.EnterpriseServer
                     org.SecurityGroup,
                     org.AddressBookPolicy,
                     acceptedDomains.ToArray());
+
+                // delete public folders
+                if (successful)
+                {
+                    List<ExchangeAccount> folders = GetAccounts(itemId, ExchangeAccountType.PublicFolder);
+                    folders.Sort(delegate(ExchangeAccount f1, ExchangeAccount f2) { return f2.AccountId.CompareTo(f1.AccountId);});
+
+                    foreach(ExchangeAccount folder in folders)
+                        DeletePublicFolder(itemId, folder.AccountId);
+
+                    exchange.DeletePublicFolder(org.OrganizationId, "\\" + org.OrganizationId);
+                }
 
 
                 return successful ? 0 : BusinessErrorCodes.ERROR_EXCHANGE_DELETE_SOME_PROBLEMS;
@@ -1782,7 +1795,9 @@ namespace WebsitePanel.EnterpriseServer
                 //GetServiceSettings
                 StringDictionary primSettings = ServerController.GetServiceSettings(exchangeServiceId);
 
-                string samAccount = exchange.CreateMailEnableUser(email, org.OrganizationId, org.DistinguishedName, accountType, primSettings["mailboxdatabase"],
+                string samAccount = exchange.CreateMailEnableUser(email, org.OrganizationId, org.DistinguishedName,
+                                                org.SecurityGroup, org.DefaultDomain,
+                                                accountType, primSettings["mailboxdatabase"],
                                                 org.OfflineAddressBook,
                                                 org.AddressBookPolicy,
                                                 retUser.SamAccountName,
@@ -5317,6 +5332,54 @@ namespace WebsitePanel.EnterpriseServer
                 TaskManager.CompleteTask();
             }
         }
+
+        public static string CreateOrganizationRootPublicFolder(int itemId)
+        {
+            string res = null;
+
+            // place log record
+            TaskManager.StartTask("EXCHANGE", "CREATE_ORG_PUBLIC_FOLDER", itemId);
+
+            try
+            {
+                // load organization
+                Organization org = GetOrganization(itemId);
+                if (org == null)
+                    return null;
+
+                // get mailbox settings
+                int exchangeServiceId = GetExchangeServiceID(org.PackageId);
+
+                if (exchangeServiceId <= 0)
+                    return null;
+
+                ExchangeServer exchange = GetExchangeServer(exchangeServiceId, org.ServiceId);
+
+                if (exchange == null)
+                    return null;
+
+                //Create Exchange Organization
+                if (string.IsNullOrEmpty(org.GlobalAddressList))
+                {
+                    ExtendToExchangeOrganization(ref org);
+
+                    PackageController.UpdatePackageItem(org);
+                }
+
+                res = exchange.CreateOrganizationRootPublicFolder(org.OrganizationId, org.DistinguishedName, org.SecurityGroup, org.DefaultDomain);
+            }
+            catch (Exception ex)
+            {
+                throw TaskManager.WriteError(ex);
+            }
+            finally
+            {
+                TaskManager.CompleteTask();
+            }
+
+            return res;
+        }
+
         #endregion
 
         #region Private Helpers
