@@ -49,10 +49,10 @@ namespace WebsitePanel.Portal
 
             // visibility
             chkRecursive.Visible = (PanelSecurity.SelectedUser.Role != UserRole.User);
-            gvDomains.Columns[2].Visible = gvDomains.Columns[3].Visible =
+            gvDomains.Columns[3].Visible = gvDomains.Columns[3].Visible =
                 (PanelSecurity.SelectedUser.Role != UserRole.User) && chkRecursive.Checked;
-			gvDomains.Columns[4].Visible = (PanelSecurity.SelectedUser.Role == UserRole.Administrator);
-			gvDomains.Columns[5].Visible = (PanelSecurity.EffectiveUser.Role == UserRole.Administrator);
+			gvDomains.Columns[5].Visible = (PanelSecurity.SelectedUser.Role == UserRole.Administrator);
+			gvDomains.Columns[6].Visible = (PanelSecurity.EffectiveUser.Role == UserRole.Administrator);
 
             if (!IsPostBack)
             {
@@ -98,6 +98,29 @@ namespace WebsitePanel.Portal
                 return GetLocalizedString("DomainType.SubDomain");
             else
                 return GetLocalizedString("DomainType.Domain");
+        }
+
+        public string GetDomainExpirationDate(object expirationDateObject, object LastUpdateDateObject)
+        {
+            var expirationDate = expirationDateObject as DateTime?;
+            var lastUpdateDate = LastUpdateDateObject as DateTime?;
+
+            if (expirationDate != null && expirationDate < DateTime.Now)
+            {
+                return GetLocalizedString("DomainExpirationDate.Expired");
+            }
+            else if(expirationDate != null)
+            {
+                return expirationDate.Value.ToShortDateString();
+            }
+            else if (lastUpdateDate == null)
+            {
+                return GetLocalizedString("DomainExpirationDate.NotChecked");
+            }
+            else
+            {
+                return GetLocalizedString("DomainExpirationDate.NotExist");
+            }
         }
 
         protected void odsDomainsPaged_Selected(object sender, ObjectDataSourceStatusEventArgs e)

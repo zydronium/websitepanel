@@ -36,6 +36,8 @@ using Microsoft.ApplicationBlocks.Data;
 using System.Collections.Generic;
 using Microsoft.Win32;
 using WebsitePanel.Providers.RemoteDesktopServices;
+using WebsitePanel.Providers.DNS;
+using WebsitePanel.Providers.DomainLookup;
 
 namespace WebsitePanel.EnterpriseServer
 {
@@ -4719,5 +4721,90 @@ namespace WebsitePanel.EnterpriseServer
         }
 
         #endregion
+
+        #region MX|NX Services
+
+        public static IDataReader GetAllPackages()
+        {
+            return SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                "GetAllPackages"
+            );
+        }
+
+        public static IDataReader GetDomainDnsRecords(int domainId, DnsRecordType recordType)
+        {
+            return SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                "GetDomainDnsRecords",
+                new SqlParameter("@DomainId", domainId),
+                new SqlParameter("@RecordType", recordType)
+            );
+        }
+
+        public static void AddDomainDnsRecord(DnsRecordInfo domainDnsRecord)
+        {
+            SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                "AddDomainDnsRecord",
+                new SqlParameter("@DomainId", domainDnsRecord.DomainId),
+                new SqlParameter("@RecordType", domainDnsRecord.RecordType),
+                new SqlParameter("@DnsServer", domainDnsRecord.DnsServer),
+                new SqlParameter("@Value", domainDnsRecord.Value),
+                new SqlParameter("@Date", domainDnsRecord.Date)
+            );
+        }
+
+        public static IDataReader GetScheduleTaskEmailTemplate(string taskId)
+        {
+            return SqlHelper.ExecuteReader(
+                    ConnectionString,
+                    CommandType.StoredProcedure,
+                    "GetScheduleTaskEmailTemplate",
+                    new SqlParameter("@taskId", taskId)
+                );
+        }
+
+        public static void DeleteDomainDnsRecord(int id)
+        {
+            SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                "DeleteDomainDnsRecord",
+                new SqlParameter("@Id", id)
+            );
+        }
+
+        public static void UpdateDomainCreationDate(int domainId, DateTime date)
+        {
+            UpdateDomainDate(domainId, "UpdateDomainCreationDate", date);
+        }
+
+        public static void UpdateDomainExpirationDate(int domainId, DateTime date)
+        {
+            UpdateDomainDate(domainId, "UpdateDomainExpirationDate", date);
+        }
+
+        public static void UpdateDomainLastUpdateDate(int domainId, DateTime date)
+        {
+            UpdateDomainDate(domainId, "UpdateDomainLastUpdateDate", date);
+        }
+
+        private static void UpdateDomainDate(int domainId, string stroredProcedure, DateTime date)
+        {
+            SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                stroredProcedure,
+                new SqlParameter("@DomainId", domainId),
+                new SqlParameter("@Date", date)
+            );
+        }
+
+        #endregion
+
     }
 }
