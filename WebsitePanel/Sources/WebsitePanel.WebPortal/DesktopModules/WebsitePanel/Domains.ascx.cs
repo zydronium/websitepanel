@@ -36,6 +36,7 @@ using System.Web.UI;
 using System.Web.UI.WebControls;
 using System.Web.UI.WebControls.WebParts;
 using System.Web.UI.HtmlControls;
+using System.Linq;
 
 using WebsitePanel.EnterpriseServer;
 
@@ -49,10 +50,10 @@ namespace WebsitePanel.Portal
 
             // visibility
             chkRecursive.Visible = (PanelSecurity.SelectedUser.Role != UserRole.User);
-            gvDomains.Columns[2].Visible = gvDomains.Columns[3].Visible =
+            gvDomains.Columns[3].Visible = gvDomains.Columns[3].Visible =
                 (PanelSecurity.SelectedUser.Role != UserRole.User) && chkRecursive.Checked;
-			gvDomains.Columns[4].Visible = (PanelSecurity.SelectedUser.Role == UserRole.Administrator);
-			gvDomains.Columns[5].Visible = (PanelSecurity.EffectiveUser.Role == UserRole.Administrator);
+			gvDomains.Columns[5].Visible = (PanelSecurity.SelectedUser.Role == UserRole.Administrator);
+			gvDomains.Columns[6].Visible = (PanelSecurity.EffectiveUser.Role == UserRole.Administrator);
 
             if (!IsPostBack)
             {
@@ -98,6 +99,68 @@ namespace WebsitePanel.Portal
                 return GetLocalizedString("DomainType.SubDomain");
             else
                 return GetLocalizedString("DomainType.Domain");
+        }
+
+        public string GetDomainExpirationDate(object expirationDateObject, object LastUpdateDateObject)
+        {
+            var expirationDate = expirationDateObject as DateTime?;
+            var lastUpdateDate = LastUpdateDateObject as DateTime?;
+
+            if (expirationDate != null && expirationDate < DateTime.Now)
+            {
+                return GetLocalizedString("DomainExpirationDate.Expired");
+            }
+            else if(expirationDate != null)
+            {
+                return expirationDate.Value.ToShortDateString();
+            }
+            else if (lastUpdateDate == null)
+            {
+                return GetLocalizedString("DomainExpirationDate.NotChecked");
+            }
+            else
+            {
+                return GetLocalizedString("DomainExpirationDate.NotExist");
+            }
+        }
+
+        public bool ShowDomainDnsInfo(object expirationDateObject, object LastUpdateDateObject, bool isTopLevelDomain)
+        {
+            var expirationDate = expirationDateObject as DateTime?;
+            var lastUpdateDate = LastUpdateDateObject as DateTime?;
+
+            if (!isTopLevelDomain)
+            {
+                return false;
+            }
+            else if (expirationDate != null && expirationDate < DateTime.Now)
+            {
+                return false;
+            }
+            else if(expirationDate != null)
+            {
+                return true;
+            }
+            else if (lastUpdateDate == null)
+            {
+                return false;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public string GetDomainDnsRecords(int domainId)
+        {
+            var records = ES.Services.Servers.GetDomainDnsRecords(domainId);
+
+            if (!records.Any())
+            {
+                return "No Dns Records";
+            }
+
+            return string.Join("\r\n", records.Select(x=>string.Format("{0}: {1}", x.RecordType, x.Value)));
         }
 
         protected void odsDomainsPaged_Selected(object sender, ObjectDataSourceStatusEventArgs e)

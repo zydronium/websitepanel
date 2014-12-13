@@ -5599,10 +5599,26 @@
   <data name="Quota.Exchange2013.SharedMailboxes" xml:space="preserve">
     <value>Shared Mailboxes per Organization</value>
   </data>
-  <data name="ResourceMailbox.Text" xml:space="preserve">
-    <value> (resource mailbox)</value>
+  <data name="RoomMailbox.Text" xml:space="preserve">
+    <value> (room mailbox)</value>
   </data>
   <data name="SharedMailbox.Text" xml:space="preserve">
     <value> (shared mailbox)</value>
   </data>
+  <data name="EquipmentMailbox.Text" xml:space="preserve">
+    <value> (equipment mailbox)</value>
+  </data>
+  <data name="Success.DOMAIN_UPDATE_DOMAIN" xml:space="preserve">
+    <value>Domain information has been successfully updated.</value>
+  </data>
+  <data name="Success.WEB_UPDATE_SITE" xml:space="preserve">
+    <value>Web site has been successfully updated.</value>
+  </data>
+  <data name="SchedulerTask.SCHEDULE_TASK_DOMAIN_LOOKUP" xml:space="preserve">
+    <value>Check MX and NS on DNS servers</value>
+  </data>
+  <data name="SchedulerTask.SCHEDULE_TASK_DOMAIN_EXPIRATION" xml:space="preserve">
+    <value>Check domain expiration date</value>
+  </data>
+
 </root>

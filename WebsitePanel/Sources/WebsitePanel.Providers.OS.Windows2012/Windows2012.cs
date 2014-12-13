@@ -49,6 +49,9 @@ using System.Management.Automation.Runspaces;
 using WebsitePanel.Providers.Common;
 
 using System.Runtime.InteropServices;
+using System.Linq;
+using WebsitePanel.Providers.DomainLookup;
+using WebsitePanel.Providers.DNS;
 
 
 namespace WebsitePanel.Providers.OS
@@ -295,7 +298,7 @@ namespace WebsitePanel.Providers.OS
 
             ExecuteShellCommand(runSpace, cmd, false);
         }
-
+        
         #region PowerShell integration
         private static InitialSessionState session = null;
 
