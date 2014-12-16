@@ -40,6 +40,7 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
     public interface IRemoteDesktopServices
     {
         bool CreateCollection(string organizationId, RdsCollection collection);
+        bool AddRdsServersToDeployment(RdsServer[] servers);
         RdsCollection GetCollection(string collectionName);
         bool RemoveCollection(string organizationId, string collectionName);
         bool SetUsersInCollection(string organizationId, string collectionName, List<string> users);
@@ -47,6 +48,8 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
         void AddSessionHostServersToCollection(string organizationId, string collectionName, List<RdsServer> servers);
         void RemoveSessionHostServerFromCollection(string organizationId, string collectionName, RdsServer server);
         void RemoveSessionHostServersFromCollection(string organizationId, string collectionName, List<RdsServer> servers);
+
+        void SetRDServerNewConnectionAllowed(bool newConnectionAllowed, RdsServer server);
 
         List<StartMenuApp> GetAvailableRemoteApplications(string collectionName);
         List<RemoteApplication> GetCollectionRemoteApplications(string collectionName);

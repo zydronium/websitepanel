@@ -68,6 +68,11 @@ namespace WebsitePanel.EnterpriseServer
             return AddRdsCollectionInternal(itemId, collection);
         }
 
+        public static ResultObject EditRdsCollection(int itemId, RdsCollection collection)
+        {
+            return EditRdsCollectionInternal(itemId, collection);
+        }
+
         public static RdsCollectionPaged GetRdsCollectionsPaged(int itemId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
         {
             return GetRdsCollectionsPagedInternal(itemId, filterColumn, filterValue, sortColumn, startRow, maximumRows);
@@ -93,9 +98,9 @@ namespace WebsitePanel.EnterpriseServer
             return GetFreeRdsServersPagedInternal(filterColumn, filterValue, sortColumn, startRow, maximumRows);
         }
 
-        public static RdsServersPaged GetOrganizationRdsServersPaged(int itemId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
+        public static RdsServersPaged GetOrganizationRdsServersPaged(int itemId, int? collectionId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
         {
-            return GetOrganizationRdsServersPagedInternal(itemId, filterColumn, filterValue, sortColumn, startRow, maximumRows);
+            return GetOrganizationRdsServersPagedInternal(itemId, collectionId, filterColumn, filterValue, sortColumn, startRow, maximumRows);
         }
 
         public static RdsServersPaged GetOrganizationFreeRdsServersPaged(int itemId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
@@ -106,6 +111,11 @@ namespace WebsitePanel.EnterpriseServer
         public static RdsServer GetRdsServer(int rdsSeverId)
         {
             return GetRdsServerInternal(rdsSeverId);
+        }
+
+        public static ResultObject SetRDServerNewConnectionAllowed(int itemId, bool newConnectionAllowed, int rdsSeverId)
+        {
+            return SetRDServerNewConnectionAllowedInternal(itemId, newConnectionAllowed, rdsSeverId);
         }
 
         public static List<RdsServer> GetCollectionRdsServers(int collectionId)
@@ -280,6 +290,58 @@ namespace WebsitePanel.EnterpriseServer
             return result;
         }
 
+        private static ResultObject EditRdsCollectionInternal(int itemId, RdsCollection collection)
+        {
+            var result = TaskManager.StartResultTask<ResultObject>("REMOTE_DESKTOP_SERVICES", "EDIT_RDS_COLLECTION");
+
+            try
+            {                
+                Organization org = OrganizationController.GetOrganization(itemId);
+
+                if (org == null)
+                {
+                    result.IsSuccess = false;
+                    result.AddError("", new NullReferenceException("Organization not found"));
+                    return result;
+                }
+
+                var rds = GetRemoteDesktopServices(GetRemoteDesktopServiceID(org.PackageId));
+                var existingServers =
+                    ObjectUtils.CreateListFromDataReader<RdsServer>(DataProvider.GetRDSServersByCollectionId(collection.Id)).ToList();
+                var removedServers = existingServers.Where(x => !collection.Servers.Select(y => y.Id).Contains(x.Id));
+                var newServers = collection.Servers.Where(x => !existingServers.Select(y => y.Id).Contains(x.Id));
+
+                foreach(var server in removedServers)
+                {
+                    DataProvider.RemoveRDSServerFromCollection(server.Id);
+                }
+
+                rds.AddRdsServersToDeployment(newServers.ToArray());
+
+                foreach (var server in newServers)
+                {                    
+                    DataProvider.AddRDSServerToCollection(server.Id, collection.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                result.AddError("REMOTE_DESKTOP_SERVICES_ADD_RDS_COLLECTION", ex);
+            }
+            finally
+            {
+                if (!result.IsSuccess)
+                {
+                    TaskManager.CompleteResultTask(result);
+                }
+                else
+                {
+                    TaskManager.CompleteResultTask();
+                }
+            }
+
+            return result;
+        }
+
         private static RdsCollectionPaged GetRdsCollectionsPagedInternal(int itemId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
         {
             DataSet ds = DataProvider.GetRDSCollectionsPaged(itemId, filterColumn, filterValue, sortColumn, startRow, maximumRows);
@@ -420,9 +482,9 @@ namespace WebsitePanel.EnterpriseServer
             return result;
         }
 
-        private static RdsServersPaged GetOrganizationRdsServersPagedInternal(int itemId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
+        private static RdsServersPaged GetOrganizationRdsServersPagedInternal(int itemId, int? collectionId, string filterColumn, string filterValue, string sortColumn, int startRow, int maximumRows)
         {
-            DataSet ds = DataProvider.GetRDSServersPaged(itemId, null, filterColumn, filterValue, sortColumn, startRow, maximumRows, ignoreRdsCollectionId: true);
+            DataSet ds = DataProvider.GetRDSServersPaged(itemId, collectionId, filterColumn, filterValue, sortColumn, startRow, maximumRows, ignoreRdsCollectionId: !collectionId.HasValue);
 
             RdsServersPaged result = new RdsServersPaged();
             result.RecordsCount = (int)ds.Tables[0].Rows[0][0];
@@ -455,6 +517,54 @@ namespace WebsitePanel.EnterpriseServer
         private static RdsServer GetRdsServerInternal(int rdsSeverId)
         {
             return ObjectUtils.FillObjectFromDataReader<RdsServer>(DataProvider.GetRDSServerById(rdsSeverId));
+        }
+
+        private static ResultObject SetRDServerNewConnectionAllowedInternal(int itemId, bool newConnectionAllowed, int rdsSeverId)
+        {
+            ResultObject result = TaskManager.StartResultTask<ResultObject>("REMOTE_DESKTOP_SERVICES", "SET_RDS_SERVER_NEW_CONNECTIONS_ALLOWED"); ;
+            try
+            {
+                // load organization
+                Organization org = OrganizationController.GetOrganization(itemId);
+                if (org == null)
+                {
+                    result.IsSuccess = false;
+                    result.AddError("", new NullReferenceException("Organization not found"));
+                    return result;
+                }
+
+                var rds = GetRemoteDesktopServices(GetRemoteDesktopServiceID(org.PackageId));
+
+                var rdsServer = GetRdsServer(rdsSeverId);                
+
+                if (rdsServer == null)
+                {
+                    result.IsSuccess = false;
+                    result.AddError("", new NullReferenceException("RDS Server not found"));
+                    return result;
+                }
+
+                rds.SetRDServerNewConnectionAllowed(newConnectionAllowed, rdsServer);
+                rdsServer.ConnectionEnabled = newConnectionAllowed;
+                DataProvider.UpdateRDSServer(rdsServer);
+            }
+            catch (Exception ex)
+            {
+                result.AddError("REMOTE_DESKTOP_SERVICES_SET_RDS_SERVER_NEW_CONNECTIONS_ALLOWED", ex);
+            }
+            finally
+            {
+                if (!result.IsSuccess)
+                {
+                    TaskManager.CompleteResultTask(result);
+                }
+                else
+                {
+                    TaskManager.CompleteResultTask();
+                }
+            }
+
+            return result;
         }
 
         private static int GetOrganizationRdsUsersCountInternal(int itemId)
@@ -639,7 +749,7 @@ namespace WebsitePanel.EnterpriseServer
 
                 RdsServer rdsServer = GetRdsServer(serverId);
 
-                if (!rds.CheckSessionHostFeatureInstallation(rdsServer.FqdName))
+                //if (!rds.CheckSessionHostFeatureInstallation(rdsServer.FqdName))
                 {
                     rds.AddSessionHostFeatureToServer(rdsServer.FqdName);
                 }

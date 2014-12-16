@@ -77,6 +77,23 @@ namespace WebsitePanel.Server
         }
 
         [WebMethod, SoapHeader("settings")]
+        public bool AddRdsServersToDeployment(RdsServer[] servers)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName);
+                var result = RDSProvider.AddRdsServersToDeployment(servers);
+                Log.WriteEnd("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+
+        [WebMethod, SoapHeader("settings")]
         public RdsCollection GetCollection(string collectionName)
         {
             try
@@ -187,6 +204,22 @@ namespace WebsitePanel.Server
             catch (Exception ex)
             {
                 Log.WriteError(String.Format("'{0}' RemoveSessionHostServersFromCollection", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+
+        [WebMethod, SoapHeader("settings")]
+        public void SetRDServerNewConnectionAllowed(bool newConnectionAllowed, RdsServer server)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' SetRDServerNewConnectionAllowed", ProviderSettings.ProviderName);
+                RDSProvider.SetRDServerNewConnectionAllowed(newConnectionAllowed, server);
+                Log.WriteEnd("'{0}' SetRDServerNewConnectionAllowed", ProviderSettings.ProviderName);
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' SetRDServerNewConnectionAllowed", ProviderSettings.ProviderName), ex);
                 throw;
             }
         }
