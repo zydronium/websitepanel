@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using WebsitePanel.Providers.DomainLookup;
 using Whois.NET;
 
@@ -31,6 +32,8 @@ namespace WebsitePanel.EnterpriseServer
             var checkedDomains = new List<int>();
             var expiredDomains = new List<DomainInfo>();
             var nonExistenDomains = new List<DomainInfo>();
+            var allDomains = new List<DomainInfo>();
+            var allTopLevelDomains = new List<DomainInfo>();
 
             // get input parameters
             int daysBeforeNotify;
@@ -55,11 +58,11 @@ namespace WebsitePanel.EnterpriseServer
             {
                 var domains = ServerController.GetDomains(package.PackageId);
 
-                var subDomains = domains.Where(x => x.IsSubDomain).ToList();
+                allDomains.AddRange(domains);
 
-                var topLevelDomains = domains = domains.Where(x => !x.IsSubDomain && !x.IsDomainPointer).ToList(); //Selecting top-level domains
+                domains = domains.Where(x => !x.IsSubDomain && !x.IsDomainPointer).ToList(); //Selecting top-level domains
 
-                domains = topLevelDomains.Where(x => x.CreationDate == null || x.ExpirationDate == null ? true : CheckDomainExpiration(x.ExpirationDate, daysBeforeNotify)).ToList(); // selecting expired or with empty expire date domains
+                allTopLevelDomains.AddRange(domains);
 
                 var domainUser = UserController.GetUser(package.UserId);
 
@@ -88,16 +91,30 @@ namespace WebsitePanel.EnterpriseServer
                     {
                         nonExistenDomains.Add(domain);
                     }
+
+                    Thread.Sleep(100);
                 }
+            }
 
-                foreach (var subDomain in subDomains)
+            var subDomains = allDomains.Where(x => x.ExpirationDate == null || CheckDomainExpiration(x.ExpirationDate, daysBeforeNotify)).GroupBy(p => p.DomainId).Select(g => g.First()).ToList();
+            allTopLevelDomains = allTopLevelDomains.GroupBy(p => p.DomainId).Select(g => g.First()).ToList();
+
+            foreach (var subDomain in subDomains)
+            {
+                var mainDomain = allTopLevelDomains.Where(x => subDomain.DomainId != x.DomainId && subDomain.DomainName.ToLowerInvariant().Contains(x.DomainName.ToLowerInvariant())).OrderByDescending(s => s.DomainName.Length).FirstOrDefault(); ;
+
+                if (mainDomain != null)
                 {
-                    var mainDomain = topLevelDomains.Where(x => subDomain.DomainName.ToLowerInvariant().Contains(x.DomainName.ToLowerInvariant())).OrderByDescending(s => s.DomainName.Length).FirstOrDefault(); ;
+                    ServerController.UpdateDomainRegistrationData(subDomain, mainDomain.CreationDate, mainDomain.ExpirationDate);
 
-                    if (mainDomain != null)
+                    var nonExistenDomain = nonExistenDomains.FirstOrDefault(x => subDomain.DomainId == x.DomainId);
+
+                    if (nonExistenDomain != null)
                     {
-                        ServerController.UpdateDomainRegistrationData(subDomain, mainDomain.CreationDate, mainDomain.ExpirationDate);
+                        nonExistenDomains.Remove(nonExistenDomain);
                     }
+
+                    Thread.Sleep(100);
                 }
             }
 

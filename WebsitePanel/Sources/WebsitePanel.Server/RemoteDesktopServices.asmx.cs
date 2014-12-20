@@ -77,6 +77,23 @@ namespace WebsitePanel.Server
         }
 
         [WebMethod, SoapHeader("settings")]
+        public bool AddRdsServersToDeployment(RdsServer[] servers)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName);
+                var result = RDSProvider.AddRdsServersToDeployment(servers);
+                Log.WriteEnd("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' AddRdsServersToDeployment", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+
+        [WebMethod, SoapHeader("settings")]
         public RdsCollection GetCollection(string collectionName)
         {
             try
@@ -342,6 +359,39 @@ namespace WebsitePanel.Server
                 throw;
             }
         }
-    }
 
+        [WebMethod, SoapHeader("settings")]
+        public string[] GetApplicationUsers(string collectionName, string applicationName)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' GetApplicationUsers", ProviderSettings.ProviderName);
+                var result = RDSProvider.GetApplicationUsers(collectionName, applicationName);
+                Log.WriteEnd("'{0}' GetApplicationUsers", ProviderSettings.ProviderName);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' GetApplicationUsers", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+
+        [WebMethod, SoapHeader("settings")]
+        public bool SetApplicationUsers(string collectionName, RemoteApplication remoteApp, string[] users)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' SetApplicationUsers", ProviderSettings.ProviderName);
+                var result = RDSProvider.SetApplicationUsers(collectionName, remoteApp, users);
+                Log.WriteEnd("'{0}' SetApplicationUsers", ProviderSettings.ProviderName);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' SetApplicationUsers", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+    }
 }

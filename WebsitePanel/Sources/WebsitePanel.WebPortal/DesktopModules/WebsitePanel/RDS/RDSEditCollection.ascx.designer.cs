@@ -7,63 +7,81 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace WebsitePanel.Portal.ScheduleTaskControls {
+namespace WebsitePanel.Portal.RDS {
     
     
-    public partial class DomainLookupView {
+    public partial class RDSEditCollection {
         
         /// <summary>
-        /// lblServerName control.
+        /// asyncTasks control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblServerName;
+        protected global::WebsitePanel.Portal.EnableAsyncTasksSupport asyncTasks;
         
         /// <summary>
-        /// ddlServers control.
+        /// imgAddRDSServer control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlServers;
+        protected global::System.Web.UI.WebControls.Image imgAddRDSServer;
         
         /// <summary>
-        /// lblDnsServers control.
+        /// locTitle control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblDnsServers;
+        protected global::System.Web.UI.WebControls.Localize locTitle;
         
         /// <summary>
-        /// txtDnsServers control.
+        /// messageBox control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtDnsServers;
+        protected global::WebsitePanel.Portal.UserControls.SimpleMessageBox messageBox;
         
         /// <summary>
-        /// lblMailTo control.
+        /// RDSServersPanel control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.Label lblMailTo;
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl RDSServersPanel;
         
         /// <summary>
-        /// txtMailTo control.
+        /// locRDSServersSection control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtMailTo;
+        protected global::System.Web.UI.WebControls.Localize locRDSServersSection;
+        
+        /// <summary>
+        /// servers control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::WebsitePanel.Portal.RDS.UserControls.RDSCollectionServers servers;
+        
+        /// <summary>
+        /// btnSave control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnSave;
     }
 }

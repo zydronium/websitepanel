@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014, Outercurve Foundation.
+// Copyright (c) 2014, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -26,52 +26,54 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE)  ARISING  IN  ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-using System.ServiceProcess;
-using System.Threading;
-using WebsitePanel.EnterpriseServer;
+using System;
+using System.Data;
+using System.Configuration;
+using System.Collections;
+using System.Collections.Specialized;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Web.UI.HtmlControls;
 
-namespace WebsitePanel.SchedulerService
+namespace WebsitePanel.Portal.ProviderControls
 {
-    public partial class SchedulerService : ServiceBase
+    public partial class Windows2012_Settings : WebsitePanelControlBase, IHostingServiceProviderSettings
     {
-        private Timer _Timer;
-        private static object _isRuninng;
-        #region Construcor
-
-        public SchedulerService()
+        protected void Page_Load(object sender, EventArgs e)
         {
-            _isRuninng = new object();
-
-            InitializeComponent();
-
-            _Timer = new Timer(Process, null, 5000, 5000);
-        }
-
-        #endregion
-
-        #region Methods
-
-        protected override void OnStart(string[] args)
-        {
-        }
-
-        protected static void Process(object callback)
-        {
-            //check running service
-            if (!Monitor.TryEnter(_isRuninng))
-                return;
-
-            try
+            //CO Changes
+            if (!IsPostBack)
             {
-                Scheduler.Start();
+                try
+                {
+                    chkEnableHardQuota.Enabled = ES.Services.OperatingSystems.CheckFileServicesInstallation(PanelRequest.ServiceId);
+                    if (!chkEnableHardQuota.Enabled)
+                        lblFileServiceInfo.Visible = true;
+                }
+                catch
+                {
+                }
             }
-            finally
-            {
-                Monitor.Exit(_isRuninng);
-            }
-
+            //END
         }
 
-        #endregion
+        public void BindSettings(StringDictionary settings)
+        {
+            txtFolder.Text = settings["UsersHome"];
+            //CO Changes
+            chkEnableHardQuota.Checked = settings["EnableHardQuota"] == "true" ? true : false;
+            //END 
+        }
+
+        public void SaveSettings(StringDictionary settings)
+        {
+            settings["UsersHome"] = txtFolder.Text;
+            //CO Changes
+            settings["EnableHardQuota"] = chkEnableHardQuota.Checked.ToString().ToLower();
+            //END 
+        }
     }
 }
