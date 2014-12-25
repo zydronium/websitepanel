@@ -80,7 +80,7 @@ namespace WebsitePanel.EnterpriseServer
 
                     checkedDomains.Add(domain.DomainId);
 
-                    ServerController.UpdateDomainRegistrationData(domain);
+                    ServerController.UpdateDomainWhoisData(domain);
 
                     if (CheckDomainExpiration(domain.ExpirationDate, daysBeforeNotify))
                     {
@@ -105,7 +105,7 @@ namespace WebsitePanel.EnterpriseServer
 
                 if (mainDomain != null)
                 {
-                    ServerController.UpdateDomainRegistrationData(subDomain, mainDomain.CreationDate, mainDomain.ExpirationDate);
+                    ServerController.UpdateDomainWhoisData(subDomain, mainDomain.CreationDate, mainDomain.ExpirationDate, mainDomain.RegistrarName);
 
                     var nonExistenDomain = nonExistenDomains.FirstOrDefault(x => subDomain.DomainId == x.DomainId);
 
@@ -181,9 +181,13 @@ namespace WebsitePanel.EnterpriseServer
             Hashtable items = new Hashtable();
 
             items["user"] = user;
+
             items["Domains"] = domains.Select(x => new { DomainName = x.DomainName, 
-                                                         ExpirationDate = x.ExpirationDate, 
-                                                         Customer = string.Format("{0} {1}", domainUsers[x.PackageId].FirstName, domainUsers[x.PackageId].LastName) });
+                                                         ExpirationDate = x.ExpirationDate  < DateTime.Now ? "Expired" : x.ExpirationDate.ToString(),
+                                                         ExpirationDateOrdering = x.ExpirationDate, 
+                                                         Registrar = x.RegistrarName,
+                                                         Customer = string.Format("{0} {1}", domainUsers[x.PackageId].FirstName, domainUsers[x.PackageId].LastName) })
+                                      .OrderBy(x => x.ExpirationDateOrdering).ThenBy(x => x.Customer).ThenBy(x => x.DomainName);
             
             items["IncludeNonExistenDomains"] = includeNonExistenDomains;
 
@@ -191,7 +195,7 @@ namespace WebsitePanel.EnterpriseServer
             {
                 DomainName = x.DomainName,
                 Customer = string.Format("{0} {1}", domainUsers[x.PackageId].FirstName, domainUsers[x.PackageId].LastName)
-            });
+            }).OrderBy(x => x.Customer).ThenBy(x => x.DomainName);
 
 
             body = PackageController.EvaluateTemplate(body, items);
