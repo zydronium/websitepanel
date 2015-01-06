@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Outercurve Foundation.
+// Copyright (c) 2015, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -284,6 +284,7 @@ namespace WebsitePanel.EnterpriseServer
             catch (Exception ex)
             {
                 result.AddError("REMOTE_DESKTOP_SERVICES_ADD_RDS_COLLECTION", ex);
+                throw TaskManager.WriteError(ex);
             }
             finally
             {
