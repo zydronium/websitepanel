@@ -1,4 +1,4 @@
-// Copyright (c) 2014, Outercurve Foundation.
+// Copyright (c) 2015, Outercurve Foundation.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without modification,
@@ -2683,6 +2683,17 @@ namespace WebsitePanel.EnterpriseServer
                 new SqlParameter("@AccountType", accountType)
             );
         }
+
+        public static IDataReader GetExchangeAccountByAccountNameWithoutItemId(string primaryEmailAddress)
+        {
+            return SqlHelper.ExecuteReader(
+                ConnectionString,
+                CommandType.StoredProcedure,
+                "GetExchangeAccountByAccountNameWithoutItemId",
+                new SqlParameter("@PrimaryEmailAddress", primaryEmailAddress)
+            );
+        }
+
 
         public static IDataReader GetExchangeMailboxes(int itemId)
         {
