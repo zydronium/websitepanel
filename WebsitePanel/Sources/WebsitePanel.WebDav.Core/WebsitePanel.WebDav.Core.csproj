@@ -41,10 +41,11 @@
     </Reference>
     <Reference Include="Microsoft.Web.Services3, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Scheduler Domains\WebsitePanel\Bin\Microsoft.Web.Services3.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Web.Services3.3.0.0.0\lib\net20\Microsoft.Web.Services3.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.DirectoryServices.AccountManagement" />
@@ -83,9 +84,8 @@
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
-    <Reference Include="WebsitePanel.EnterpriseServer.Base, Version=2.1.0.1, Culture=neutral, PublicKeyToken=da8782a6fc4d0081, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\..\Scheduler Domains\WebsitePanel\Bin\WebsitePanel.EnterpriseServer.Base.dll</HintPath>
+    <Reference Include="WebsitePanel.EnterpriseServer.Base">
+      <HintPath>..\WebsitePanel.WebPortal\Bin\WebsitePanel.EnterpriseServer.Base.dll</HintPath>
     </Reference>
     <Reference Include="WebsitePanel.EnterpriseServer.Client">
       <HintPath>..\WebsitePanel.WebPortal\Bin\WebsitePanel.EnterpriseServer.Client.dll</HintPath>
@@ -114,6 +114,7 @@
     <Compile Include="Config\WebConfigSections\SessionKeysElementCollection.cs" />
     <Compile Include="Config\WebConfigSections\UserDomainElement.cs" />
     <Compile Include="Config\WebConfigSections\WebDavExplorerConfigurationSettingsSection.cs" />
+    <Compile Include="Config\WebConfigSections\WebdavRootElement.cs" />
     <Compile Include="Config\WebConfigSections\WebsitePanelConstantUserElement.cs" />
     <Compile Include="Config\WebDavAppConfigManager.cs" />
     <Compile Include="Entities\Owa\CheckFileInfo.cs" />
@@ -126,6 +127,8 @@
     <Compile Include="IFolder.cs" />
     <Compile Include="IHierarchyItem.cs" />
     <Compile Include="IItemContent.cs" />
+    <Compile Include="Managers\AccessTokenManager.cs" />
+    <Compile Include="Interfaces\Managers\IAccessTokenManager.cs" />
     <Compile Include="Interfaces\Managers\IWebDavManager.cs" />
     <Compile Include="Interfaces\Owa\IWopiServer.cs" />
     <Compile Include="Interfaces\Security\IAuthenticationService.cs" />

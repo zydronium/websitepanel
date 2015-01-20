@@ -30,13 +30,13 @@ namespace WebsitePanel.WebDavPortal
 
             routes.MapRoute(
                 name: OwaRouteNames.GetFile,
-                url: "owa/wopi*/files/{encodedPath}/contents",
+                url: "owa/wopi*/files/{accessTokenId}/contents",
                 defaults: new { controller = "Owa", action = "GetFile" }
                 );
 
             routes.MapRoute(
                 name: OwaRouteNames.CheckFileInfo,
-                url: "owa/wopi*/files/{encodedPath}",
+                url: "owa/wopi*/files/{accessTokenId}",
                 defaults: new { controller = "Owa", action = "CheckFileInfo" }
                 );
 
@@ -46,6 +46,12 @@ namespace WebsitePanel.WebDavPortal
                 name: "Office365DocumentRoute",
                 url: "office365/{org}/{*pathPart}",
                 defaults: new { controller = "FileSystem", action = "ShowOfficeDocument", pathPart = UrlParameter.Optional }
+                );
+
+            routes.MapRoute(
+                name: FileSystemRouteNames.ShowAdditionalContent,
+                url: "show-additional-content/{*path}",
+                defaults: new { controller = "FileSystem", action = "ShowAdditionalContent", path = UrlParameter.Optional }
                 );
 
             routes.MapRoute(
