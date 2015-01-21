@@ -376,19 +376,12 @@ namespace WebsitePanel.Providers.HostedSolution
             set { createdResourceMailboxes = value; }
         }
 
-        public int CreatedRdsServers { get; set; }
-        public int CreatedRdsCollections { get; set; }
-        public int CreatedRdsUsers { get; set; }
-        public int AllocatedRdsServers { get; set; }
-        public int AllocatedRdsCollections { get; set; }
-        public int AllocatedRdsUsers { get; set; }
-        
         public int AllocatedDeletedUsers
         {
             get { return allocatedDeletedUsers; }
             set { allocatedDeletedUsers = value; }
         }
-        
+
         public int DeletedUsers
         {
             get { return deletedUsers; }
@@ -405,6 +398,13 @@ namespace WebsitePanel.Providers.HostedSolution
             get { return usedDeletedUsersBackupStorageSpace; }
             set { usedDeletedUsersBackupStorageSpace = value; }
         }
+        
+        public int CreatedRdsServers { get; set; }
+        public int CreatedRdsCollections { get; set; }
+        public int CreatedRdsUsers { get; set; }
+        public int AllocatedRdsServers { get; set; }
+        public int AllocatedRdsCollections { get; set; }
+        public int AllocatedRdsUsers { get; set; }               
 	}
 }
 

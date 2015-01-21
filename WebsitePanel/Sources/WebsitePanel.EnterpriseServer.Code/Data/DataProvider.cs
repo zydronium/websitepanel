@@ -3208,7 +3208,7 @@ namespace WebsitePanel.EnterpriseServer
                 "GetOrganizationDeletedUser",
                 new SqlParameter("@AccountID", accountId)
             );
-        }
+        }        
 
         public static IDataReader GetAdditionalGroups(int userId)
         {

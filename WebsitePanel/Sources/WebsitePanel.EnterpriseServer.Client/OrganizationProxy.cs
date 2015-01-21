@@ -20,6 +20,7 @@ namespace WebsitePanel.EnterpriseServer.HostedSolution {
     using System.Diagnostics;
     using System.Data;
     using WebsitePanel.Providers.HostedSolution;
+    using WebsitePanel.Providers.Common;
     using WebsitePanel.EnterpriseServer.Base.HostedSolution;
     using WebsitePanel.Providers.ResultObjects;
     using WebsitePanel.Providers;
