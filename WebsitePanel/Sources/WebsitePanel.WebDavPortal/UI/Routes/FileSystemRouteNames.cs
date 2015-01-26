@@ -7,6 +7,12 @@ namespace WebsitePanel.WebDavPortal.UI.Routes
 {
     public class FileSystemRouteNames
     {
-        public const string FilePath = "FilePathRoute";
+        public const string ShowContentPath = "ShowContentRoute";
+        public const string ShowOfficeOnlinePath = "ShowOfficeOnlineRoute";
+        public const string ShowAdditionalContent = "ShowAdditionalContentRoute";
+
+        public const string UploadFile = "UplaodFIleRoute";
+
+        public const string DeleteFiles = "DeleteFilesRoute";
     }
 }

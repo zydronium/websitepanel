@@ -65,7 +65,7 @@ namespace WebsitePanel.EnterpriseServer
         }
 
         [WebMethod]
-        public ResultObject AddRdsCollection(int itemId, RdsCollection collection)
+        public int AddRdsCollection(int itemId, RdsCollection collection)
         {
             return RemoteDesktopServicesController.AddRdsCollection(itemId, collection);
         }
@@ -235,6 +235,18 @@ namespace WebsitePanel.EnterpriseServer
         {
             return RemoteDesktopServicesController.GetOrganizationRdsUsersCount(itemId);
         }
+
+        [WebMethod]
+        public int GetOrganizationRdsServersCount(int itemId)
+        {
+            return RemoteDesktopServicesController.GetOrganizationRdsServersCount(itemId);
+        }
+
+        [WebMethod]
+        public int GetOrganizationRdsCollectionsCount(int itemId)
+        {
+            return RemoteDesktopServicesController.GetOrganizationRdsCollectionsCount(itemId);
+        }        
 
         [WebMethod]
         public List<string> GetApplicationUsers(int itemId, int collectionId, RemoteApplication remoteApp)
