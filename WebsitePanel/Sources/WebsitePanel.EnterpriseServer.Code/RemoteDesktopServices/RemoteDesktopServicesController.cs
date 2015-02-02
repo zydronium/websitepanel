@@ -243,6 +243,11 @@ namespace WebsitePanel.EnterpriseServer
             return LogOffRdsUserInternal(itemId, unifiedSessionId, hostServer);
         }
 
+        public static List<string> GetRdsCollectionSessionHosts(int collectionId)
+        {
+            return GetRdsCollectionSessionHostsInternal(collectionId);
+        }
+
         private static RdsCollection GetRdsCollectionInternal(int collectionId)
         {
             var collection = ObjectUtils.FillObjectFromDataReader<RdsCollection>(DataProvider.GetRDSCollectionById(collectionId));
@@ -391,7 +396,7 @@ namespace WebsitePanel.EnterpriseServer
                     DataProvider.RemoveRDSServerFromCollection(server.Id);
                 }
 
-                rds.AddRdsServersToDeployment(newServers.ToArray());
+                rds.AddSessionHostServersToCollection(org.OrganizationId, collection.Name, newServers.ToArray());
 
                 foreach (var server in newServers)
                 {                    
@@ -626,6 +631,23 @@ namespace WebsitePanel.EnterpriseServer
             ObjectUtils.FillCollectionFromDataView(tmpServers, ds.Tables[1].DefaultView);
             tmpServers = tmpServers.Where(x => !existingServers.Select(y => y.ToUpper()).Contains(x.FqdName.ToUpper())).ToList();
             result.Servers = tmpServers.ToArray();
+
+            return result;
+        }
+
+        private static List<string> GetRdsCollectionSessionHostsInternal(int collectionId)
+        {
+            var result = new List<string>();
+            var collection = ObjectUtils.FillObjectFromDataReader<RdsCollection>(DataProvider.GetRDSCollectionById(collectionId));
+            Organization org = OrganizationController.GetOrganization(collection.ItemId);
+
+            if (org == null)
+            {
+                return result;
+            }
+
+            var rds = GetRemoteDesktopServices(GetRemoteDesktopServiceID(org.PackageId));
+            result = rds.GetRdsCollectionSessionHosts(collection.Name).ToList();
 
             return result;
         }
@@ -1299,12 +1321,7 @@ namespace WebsitePanel.EnterpriseServer
                 List<RemoteApplication> existingCollectionApps = GetCollectionRemoteApplications(itemId, collection.Name);
                 List<RemoteApplication> remoteAppsToAdd = remoteApps.Where(x => !existingCollectionApps.Select(p => p.DisplayName).Contains(x.DisplayName)).ToList();
                 foreach (var app in remoteAppsToAdd)
-                {
-                    if (!string.IsNullOrEmpty(app.RequiredCommandLine))
-                    {
-                        app.RequiredCommandLine = string.Format("/v:{0}", collection.Servers.First().FqdName);
-                    }
-
+                {                    
                     AddRemoteApplicationToCollection(itemId, collection, app);
                 }
 
