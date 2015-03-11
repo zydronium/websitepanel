@@ -67,10 +67,12 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
         private const string Admins = "Admins";        
         private const string RdsGroupFormat = "rds-{0}-{1}";
         private const string RdsModuleName = "RemoteDesktopServices";
-        private const string AddNpsString = "netsh nps add np name=\"\"{0}\"\" policysource=\"1\" processingorder=\"{1}\" conditionid=\"0x3d\" conditiondata=\"^5$\" conditionid=\"0x1fb5\" conditiondata=\"{2}\" conditionid=\"0x1e\" conditiondata=\"UserAuthType:(PW|CA)\" profileid=\"0x1005\" profiledata=\"TRUE\" profileid=\"0x100f\" profiledata=\"TRUE\" profileid=\"0x1009\" profiledata=\"0x7\" profileid=\"0x1fe6\" profiledata=\"0x40000000\"";        
-        private const string WspAdministratorsGroupDescription = "WSP Org Administrators";
-        private const string RdsServersOU = "RDSServers";
-        private const string RdsServersRootOU = "RDSRootServers";
+        private const string AddNpsString = "netsh nps add np name=\"\"{0}\"\" policysource=\"1\" processingorder=\"{1}\" conditionid=\"0x3d\" conditiondata=\"^5$\" conditionid=\"0x1fb5\" conditiondata=\"{2}\" conditionid=\"0x1e\" conditiondata=\"UserAuthType:(PW|CA)\" profileid=\"0x1005\" profiledata=\"TRUE\" profileid=\"0x100f\" profiledata=\"TRUE\" profileid=\"0x1009\" profiledata=\"0x7\" profileid=\"0x1fe6\" profiledata=\"0x40000000\"";
+        private const string WspAdministratorsGroupDescription = "WSP RDS Collection Adminstrators";
+        private const string RdsCollectionUsersGroupDescription = "WSP RDS Collection Users";
+        private const string RdsCollectionComputersGroupDescription = "WSP RDS Collection Computers";
+        private const string RdsServersOU = "RDSServersOU";
+        private const string RdsServersRootOU = "RDSRootServersOU";
         private const string RDSHelpDeskComputerGroup = "Websitepanel-RDSHelpDesk-Computer";        
         private const string RDSHelpDeskGroup = "WSP-HelpDeskAdministrators";
         private const string RDSHelpDeskGroupDescription = "WSP Help Desk Administrators";
@@ -310,27 +312,13 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
 
                 EditRdsCollectionSettingsInternal(collection, runSpace);
                 var orgPath = GetOrganizationPath(organizationId);
-
-                if (!ActiveDirectoryUtils.AdObjectExists(GetComputerGroupPath(organizationId, collection.Name)))
-                {
-                    //Create computer group
-                    ActiveDirectoryUtils.CreateGroup(orgPath, GetComputersGroupName(collection.Name));
-
-                    //todo Connection broker server must be added by default ???
-                    //ActiveDirectoryUtils.AddObjectToGroup(GetComputerPath(ConnectionBroker), GetComputerGroupPath(organizationId, collection.Name));
-                }
-
+                CheckOrCreateAdGroup(GetComputerGroupPath(organizationId, collection.Name), orgPath, GetComputersGroupName(collection.Name), RdsCollectionComputersGroupDescription);
                 CheckOrCreateHelpDeskComputerGroup();
                 string helpDeskGroupSamAccountName = CheckOrCreateAdGroup(GetHelpDeskGroupPath(RDSHelpDeskGroup), GetRootOUPath(), RDSHelpDeskGroup, RDSHelpDeskGroupDescription);
                 string groupName = GetLocalAdminsGroupName(collection.Name);
                 string groupPath = GetGroupPath(organizationId, collection.Name, groupName);
                 string localAdminsGroupSamAccountName = CheckOrCreateAdGroup(groupPath, GetOrganizationPath(organizationId), groupName, WspAdministratorsGroupDescription);
-
-                if (!ActiveDirectoryUtils.AdObjectExists(GetUsersGroupPath(organizationId, collection.Name)))
-                {
-                    //Create user group
-                    ActiveDirectoryUtils.CreateGroup(orgPath, GetUsersGroupName(collection.Name));
-                }
+                CheckOrCreateAdGroup(GetUsersGroupPath(organizationId, collection.Name), orgPath, GetUsersGroupName(collection.Name), RdsCollectionUsersGroupDescription);                
 
                 var capPolicyName = GetPolicyName(organizationId, collection.Name, RdsPolicyTypes.RdCap);
                 var rapPolicyName = GetPolicyName(organizationId, collection.Name, RdsPolicyTypes.RdRap);
@@ -351,11 +339,12 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
                 }
 
                 //add user group to collection
-                AddUserGroupsToCollection(runSpace, collection.Name, new List<string> { GetUsersGroupName(collection.Name) });
+                AddUserGroupsToCollection(runSpace, collection.Name, new List<string> { GetUsersGroupName(collection.Name) });                
 
                 //add session servers to group
                 foreach (var rdsServer in collection.Servers)
-                {                                        
+                {
+                    MoveRdsServerToTenantOU(rdsServer.Name, organizationId);
                     AddAdGroupToLocalAdmins(runSpace, rdsServer.FqdName, helpDeskGroupSamAccountName);
                     AddAdGroupToLocalAdmins(runSpace, rdsServer.FqdName, localAdminsGroupSamAccountName);
                     AddComputerToCollectionAdComputerGroup(organizationId, collection.Name, rdsServer);
@@ -1293,28 +1282,22 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
         }
 
         private void AddComputerToCollectionAdComputerGroup(string organizationId, string collectionName, RdsServer server)
-        {
-            var computerPath = GetComputerPath(server.Name, false);
-            var computerGroupName = GetComputersGroupName( collectionName);            
+        {            
+            var computerGroupName = GetComputersGroupName( collectionName);
+            var computerObject = GetComputerObject(server.Name);
 
-            if (!ActiveDirectoryUtils.AdObjectExists(computerPath))
-            {
-                computerPath = GetComputerPath(server.Name, true);
-            }
-
-            if (ActiveDirectoryUtils.AdObjectExists(computerPath))
-            {
-                var computerObject = ActiveDirectoryUtils.GetADObject(computerPath);
+            if (computerObject != null)
+            {                
                 var samName = (string)ActiveDirectoryUtils.GetADObjectProperty(computerObject, "sAMAccountName");
 
                 if (!ActiveDirectoryUtils.IsComputerInGroup(samName, computerGroupName))
                 {
-                    ActiveDirectoryUtils.AddObjectToGroup(computerPath, GetComputerGroupPath(organizationId, collectionName));
+                    ActiveDirectoryUtils.AddObjectToGroup(computerObject.Path, GetComputerGroupPath(organizationId, collectionName));
                 }
 
                 if (!ActiveDirectoryUtils.IsComputerInGroup(samName, RDSHelpDeskComputerGroup))
                 {
-                    ActiveDirectoryUtils.AddObjectToGroup(computerPath, GetHelpDeskGroupPath(RDSHelpDeskComputerGroup));
+                    ActiveDirectoryUtils.AddObjectToGroup(computerObject.Path, GetHelpDeskGroupPath(RDSHelpDeskComputerGroup));
                 }
             }
 
@@ -1322,30 +1305,24 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
         }
 
         private void RemoveComputerFromCollectionAdComputerGroup(string organizationId, string collectionName, RdsServer server)
-        {
-            var computerPath = GetComputerPath(server.Name, false);
+        {            
             var computerGroupName = GetComputersGroupName(collectionName);
+            var computerObject = GetComputerObject(server.Name);
 
-            if (!ActiveDirectoryUtils.AdObjectExists(computerPath))
-            {
-                computerPath = GetComputerPath(server.Name, true);
-            }
-
-            if (ActiveDirectoryUtils.AdObjectExists(computerPath))
-            {
-                var computerObject = ActiveDirectoryUtils.GetADObject(computerPath);
+            if (computerObject != null)
+            {                
                 var samName = (string)ActiveDirectoryUtils.GetADObjectProperty(computerObject, "sAMAccountName");
 
                 if (ActiveDirectoryUtils.IsComputerInGroup(samName, computerGroupName))
                 {
-                    ActiveDirectoryUtils.RemoveObjectFromGroup(computerPath, GetComputerGroupPath(organizationId, collectionName));
+                    ActiveDirectoryUtils.RemoveObjectFromGroup(computerObject.Path, GetComputerGroupPath(organizationId, collectionName));
                 }
 
                 if (ActiveDirectoryUtils.AdObjectExists(GetHelpDeskGroupPath(RDSHelpDeskComputerGroup)))
                 {
                     if (ActiveDirectoryUtils.IsComputerInGroup(samName, RDSHelpDeskComputerGroup))
                     {
-                        ActiveDirectoryUtils.RemoveObjectFromGroup(computerPath, GetHelpDeskGroupPath(RDSHelpDeskComputerGroup));
+                        ActiveDirectoryUtils.RemoveObjectFromGroup(computerObject.Path, GetHelpDeskGroupPath(RDSHelpDeskComputerGroup));
                     }
                 }
             }
@@ -1384,7 +1361,8 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
         {
             if (ActiveDirectoryUtils.AdObjectExists(computersRootPath) && !ActiveDirectoryUtils.AdObjectExists(GetRdsServersGroupPath()))
             {                
-                ActiveDirectoryUtils.CreateGroup(computersRootPath, RdsServersRootOU);
+                //ActiveDirectoryUtils.CreateGroup(computersRootPath, RdsServersRootOU);
+                ActiveDirectoryUtils.CreateOrganizationalUnit(RdsServersRootOU, computersRootPath);
             }
         }
 
@@ -1394,82 +1372,57 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
 
             if (!ActiveDirectoryUtils.AdObjectExists(tenantComputerGroupPath))
             {
-                ActiveDirectoryUtils.CreateGroup(GetOrganizationPath(organizationId), RdsServersOU);
+                ActiveDirectoryUtils.CreateOrganizationalUnit(RdsServersOU, GetOrganizationPath(organizationId));
             }
 
-            hostName = hostName.ToLower().Replace(string.Format(".{0}", ServerSettings.ADRootDomain.ToLower()), "");
-            var computerPath = GetComputerPath(hostName, true);
+            hostName = hostName.ToLower().Replace(string.Format(".{0}", ServerSettings.ADRootDomain.ToLower()), "");            
             var rootComputerPath = GetRdsServerPath(hostName);
             var tenantComputerPath = GetTenantComputerPath(hostName, organizationId);            
 
             if (!string.IsNullOrEmpty(ComputersRootOU))
             {                
                 CheckOrCreateComputersRoot(GetComputersRootPath());
-            }
+            }            
+            
+            var computerObject = GetComputerObject(hostName);
 
-            if(!ActiveDirectoryUtils.AdObjectExists(computerPath))
+            if (computerObject != null)
             {
-                computerPath = GetComputerPath(hostName, false);
-            }
-
-            if (ActiveDirectoryUtils.AdObjectExists(computerPath))
-            {
-                var computerObject = ActiveDirectoryUtils.GetADObject(computerPath);
                 var samName = (string)ActiveDirectoryUtils.GetADObjectProperty(computerObject, "sAMAccountName");
 
-                if (!string.IsNullOrEmpty(ComputersRootOU))
-                {
-                    if (ActiveDirectoryUtils.IsComputerInGroup(samName, RdsServersRootOU))
-                    {
-                        ActiveDirectoryUtils.RemoveObjectFromGroup(computerPath, GetRdsServersGroupPath());
-                    }
-                }
-
                 if (!ActiveDirectoryUtils.IsComputerInGroup(samName, RdsServersOU))
-                {                    
+                {
                     DirectoryEntry group = new DirectoryEntry(tenantComputerGroupPath);
-                    group.Invoke("Add", computerObject.Path);
-
-                    group.CommitChanges();                    
+                    computerObject.MoveTo(group);
                 }
-            }            
+            } 
         }
 
         public void RemoveRdsServerFromTenantOU(string hostName, string organizationId)
         {
             var tenantComputerGroupPath = GetTenantComputerGroupPath(organizationId);
-            hostName = hostName.ToLower().Replace(string.Format(".{0}", ServerSettings.ADRootDomain.ToLower()), "");
-            var tenantComputerPath = GetTenantComputerPath(hostName, organizationId);
-            var rootComputerPath = GetRdsServerPath(hostName);            
+            hostName = hostName.ToLower().Replace(string.Format(".{0}", ServerSettings.ADRootDomain.ToLower()), "");                                    
 
             if (!string.IsNullOrEmpty(ComputersRootOU))
             {
                 CheckOrCreateComputersRoot(GetComputersRootPath());
-            }
+            }            
 
-            var computerPath = GetComputerPath(hostName, true);
-
-            if (!ActiveDirectoryUtils.AdObjectExists(computerPath))
+            if (!ActiveDirectoryUtils.AdObjectExists(tenantComputerGroupPath))
             {
-                computerPath = GetComputerPath(hostName, false);
+                ActiveDirectoryUtils.CreateOrganizationalUnit(RdsServersOU, GetOrganizationPath(organizationId));
             }
-
-            if (ActiveDirectoryUtils.AdObjectExists(computerPath))
+            
+            var computerObject = GetComputerObject(hostName);
+            
+            if (computerObject != null)
             {
-                var computerObject = ActiveDirectoryUtils.GetADObject(computerPath);
                 var samName = (string)ActiveDirectoryUtils.GetADObjectProperty(computerObject, "sAMAccountName");
-
-                if (ActiveDirectoryUtils.IsComputerInGroup(samName, RdsServersOU))
-                {
-                    ActiveDirectoryUtils.RemoveObjectFromGroup(computerPath, tenantComputerGroupPath);
-                }
-
+                
                 if (ActiveDirectoryUtils.AdObjectExists(GetComputersRootPath()) && !string.IsNullOrEmpty(ComputersRootOU) && !ActiveDirectoryUtils.IsComputerInGroup(samName, RdsServersRootOU))
                 {
                     DirectoryEntry group = new DirectoryEntry(GetRdsServersGroupPath());
-                    group.Invoke("Add", computerObject.Path);
-
-                    group.CommitChanges();
+                    computerObject.MoveTo(group);                    
                 }
             }
         }
@@ -1756,26 +1709,17 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
             return sb.ToString();
         }
 
-        private string GetComputerPath(string objName, bool domainController)
+        private DirectoryEntry GetComputerObject(string computerName)
         {
-            StringBuilder sb = new StringBuilder();
-            // append provider
-            AppendProtocol(sb);
-            AppendDomainController(sb);            
-            AppendCNPath(sb, objName);
-            if (domainController)
+            DirectorySearcher deSearch = new DirectorySearcher
             {
-                AppendOUPath(sb, AdDcComputers);
-            }
-            else
-            {
-                AppendCNPath(sb, Computers);
-                
-            }
-            AppendDomainPath(sb, RootDomain);
-
-            return sb.ToString();
-        }
+                Filter = string.Format("(&(objectCategory=computer)(name={0}))", computerName)
+            };
+            
+            SearchResult results = deSearch.FindOne();
+            
+            return results.GetDirectoryEntry();
+        }        
 
         private string GetTenantComputerPath(string objName, string organizationId)
         {
@@ -1784,7 +1728,7 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
             AppendProtocol(sb);
             AppendDomainController(sb);
             AppendCNPath(sb, objName);
-            AppendCNPath(sb, RdsServersOU);
+            AppendOUPath(sb, RdsServersOU);
             AppendOUPath(sb, organizationId);
             AppendOUPath(sb, RootOU);
             AppendDomainPath(sb, RootDomain);
@@ -1810,7 +1754,7 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
 
             AppendProtocol(sb);
             AppendDomainController(sb);
-            AppendCNPath(sb, RdsServersRootOU);
+            AppendOUPath(sb, RdsServersRootOU);
             AppendOUPath(sb, ComputersRootOU);
             AppendDomainPath(sb, RootDomain);
 
@@ -1824,7 +1768,7 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
             AppendProtocol(sb);
             AppendDomainController(sb);
             AppendCNPath(sb, name);
-            AppendCNPath(sb, RdsServersRootOU);
+            AppendOUPath(sb, RdsServersRootOU);
             AppendOUPath(sb, ComputersRootOU);
             AppendDomainPath(sb, RootDomain);
 
@@ -1848,7 +1792,7 @@ namespace WebsitePanel.Providers.RemoteDesktopServices
             
             AppendProtocol(sb);
             AppendDomainController(sb);
-            AppendCNPath(sb, RdsServersOU);
+            AppendOUPath(sb, RdsServersOU);
             AppendOUPath(sb, organizationId);
             AppendOUPath(sb, RootOU);
             AppendDomainPath(sb, RootDomain);
