@@ -291,25 +291,25 @@ namespace WebsitePanel.EnterpriseServer
         }
 
         [WebMethod]
-        public RdsServerInfo GetRdsServerInfo(int itemId, string fqdnName)
+        public RdsServerInfo GetRdsServerInfo(int? itemId, string fqdnName)
         {
             return RemoteDesktopServicesController.GetRdsServerInfo(itemId, fqdnName);
         }
 
         [WebMethod]
-        public string GetRdsServerStatus(int itemId, string fqdnName)
+        public string GetRdsServerStatus(int? itemId, string fqdnName)
         {
             return RemoteDesktopServicesController.GetRdsServerStatus(itemId, fqdnName);
         }
 
         [WebMethod]
-        public ResultObject ShutDownRdsServer(int itemId, string fqdnName)
+        public ResultObject ShutDownRdsServer(int? itemId, string fqdnName)
         {
             return RemoteDesktopServicesController.ShutDownRdsServer(itemId, fqdnName);
         }
 
         [WebMethod]
-        public ResultObject RestartRdsServer(int itemId, string fqdnName)
+        public ResultObject RestartRdsServer(int? itemId, string fqdnName)
         {
             return RemoteDesktopServicesController.RestartRdsServer(itemId, fqdnName);
         }
@@ -327,9 +327,33 @@ namespace WebsitePanel.EnterpriseServer
         }
 
         [WebMethod]
-        public ResultObject InstallSessionHostsCertificate(int collectionId, byte[] certificate, string password)
+        public ResultObject InstallSessionHostsCertificate(RdsServer rdsServer)
         {
-            return RemoteDesktopServicesController.InstallSessionHostsCertificate(collectionId, certificate, password);
+            return RemoteDesktopServicesController.InstallSessionHostsCertificate(rdsServer);
+        }
+
+        [WebMethod]
+        public RdsCertificate GetRdsCertificateByServiceId(int serviceId)
+        {
+            return RemoteDesktopServicesController.GetRdsCertificateByServiceId(serviceId);
+        }
+
+        [WebMethod]
+        public RdsCertificate GetRdsCertificateByItemId(int? itemId)
+        {
+            return RemoteDesktopServicesController.GetRdsCertificateByItemId(itemId);
+        }
+
+        [WebMethod]
+        public ResultObject AddRdsCertificate(RdsCertificate certificate)
+        {
+            return RemoteDesktopServicesController.AddRdsCertificate(certificate);
+        }
+
+        [WebMethod]
+        public List<ServiceInfo> GetRdsServices()
+        {
+            return RemoteDesktopServicesController.GetRdsServices();
         }
     }
 }

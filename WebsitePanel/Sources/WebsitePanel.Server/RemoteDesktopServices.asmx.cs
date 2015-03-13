@@ -566,12 +566,12 @@ namespace WebsitePanel.Server
         }
 
         [WebMethod, SoapHeader("settings")]
-        public void SaveRdsCollectionLocalAdmins(List<OrganizationUser> users, List<string> hosts)
+        public void SaveRdsCollectionLocalAdmins(List<string> users, List<string> hosts, string organizationId, string collectionName)
         {
             try
             {
                 Log.WriteStart("'{0}' SaveRdsCollectionLocalAdmins", ProviderSettings.ProviderName);
-                RDSProvider.SaveRdsCollectionLocalAdmins(users, hosts);
+                RDSProvider.SaveRdsCollectionLocalAdmins(users, hosts, collectionName, organizationId);
                 Log.WriteEnd("'{0}' SaveRdsCollectionLocalAdmins", ProviderSettings.ProviderName);
             }
             catch (Exception ex)
@@ -582,12 +582,12 @@ namespace WebsitePanel.Server
         }
 
         [WebMethod, SoapHeader("settings")]
-        public List<string> GetRdsCollectionLocalAdmins(string hostName)
+        public List<string> GetRdsCollectionLocalAdmins(string organizationId, string collectionName)
         {
             try
             {
                 Log.WriteStart("'{0}' GetRdsCollectionLocalAdmins", ProviderSettings.ProviderName);
-                var result = RDSProvider.GetRdsCollectionLocalAdmins(hostName);
+                var result = RDSProvider.GetRdsCollectionLocalAdmins(organizationId, collectionName);
                 Log.WriteEnd("'{0}' GetRdsCollectionLocalAdmins", ProviderSettings.ProviderName);
 
                 return result;
@@ -643,6 +643,22 @@ namespace WebsitePanel.Server
             catch (Exception ex)
             {
                 Log.WriteError(String.Format("'{0}' InstallCertificate", ProviderSettings.ProviderName), ex);
+                throw;
+            }
+        }
+
+        [WebMethod, SoapHeader("settings")]
+        public void MoveSessionHostToRdsOU(string hostName)
+        {
+            try
+            {
+                Log.WriteStart("'{0}' MoveSessionHostToRdsOU", ProviderSettings.ProviderName);
+                RDSProvider.MoveSessionHostToRdsOU(hostName);
+                Log.WriteEnd("'{0}' MoveSessionHostToRdsOU", ProviderSettings.ProviderName);
+            }
+            catch (Exception ex)
+            {
+                Log.WriteError(String.Format("'{0}' MoveSessionHostToRdsOU", ProviderSettings.ProviderName), ex);
                 throw;
             }
         }
