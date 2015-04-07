@@ -49,7 +49,7 @@ namespace WebsitePanel.Portal
             int errorCode;
             try
             {
-                SharePointSiteDiskSpace[] sharePointSiteDiskSpace =
+                SharePointEnterpriseSiteDiskSpace[] sharePointEnterpriseSiteDiskSpace =
                     ES.Services.HostedSharePointServersEnt.Enterprise_CalculateSharePointSitesDiskSpace(PanelRequest.ItemID,
                                                                                           out errorCode);
 
@@ -60,7 +60,7 @@ namespace WebsitePanel.Portal
                     return;
                 }
                 
-                if (sharePointSiteDiskSpace != null && sharePointSiteDiskSpace.Length == 1 && string.IsNullOrEmpty(sharePointSiteDiskSpace[0].Url))
+                if (sharePointEnterpriseSiteDiskSpace != null && sharePointEnterpriseSiteDiskSpace.Length == 1 && string.IsNullOrEmpty(sharePointEnterpriseSiteDiskSpace[0].Url))
                 {
                     gvStorageUsage.DataSource = null;
                     gvStorageUsage.DataBind();
@@ -69,15 +69,15 @@ namespace WebsitePanel.Portal
                     return;
                 }
                 
-                gvStorageUsage.DataSource = sharePointSiteDiskSpace;
+                gvStorageUsage.DataSource = sharePointEnterpriseSiteDiskSpace;
                 gvStorageUsage.DataBind();
 
-                if (sharePointSiteDiskSpace != null)
+                if (sharePointEnterpriseSiteDiskSpace != null)
                 {
-                    lblTotalItems.Text = sharePointSiteDiskSpace.Length.ToString();
+                    lblTotalItems.Text = sharePointEnterpriseSiteDiskSpace.Length.ToString();
 
                     long total = 0;
-                    foreach (SharePointSiteDiskSpace current in sharePointSiteDiskSpace)
+                    foreach (SharePointEnterpriseSiteDiskSpace current in sharePointEnterpriseSiteDiskSpace)
                     {
                         total += current.DiskSpace;
                     }

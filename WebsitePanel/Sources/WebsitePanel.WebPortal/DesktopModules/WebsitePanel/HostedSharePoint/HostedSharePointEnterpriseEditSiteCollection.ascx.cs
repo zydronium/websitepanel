@@ -42,7 +42,7 @@ namespace WebsitePanel.Portal
 {
     public partial class HostedSharePointEnterpriseEditSiteCollection : WebsitePanelModuleBase
     {
-        SharePointSiteCollection item = null;
+        SharePointEnterpriseSiteCollection item = null;
 
         private int OrganizationId
         {
@@ -188,7 +188,7 @@ namespace WebsitePanel.Portal
         /// <summary> Checks and sets disk quotas values.</summary>
         /// <param name="organization"> The organization.</param>
         /// <param name="collection"> The site collection.</param>
-        private void SetStorageQuotas(Organization organization, SharePointSiteCollection collection)
+        private void SetStorageQuotas(Organization organization, SharePointEnterpriseSiteCollection collection)
         {
             var quotaValue = organization.MaxSharePointEnterpriseStorage;
 
@@ -250,12 +250,12 @@ namespace WebsitePanel.Portal
                 // new item
                 try
                 {
-                    item = new SharePointSiteCollection();
+                    item = new SharePointEnterpriseSiteCollection();
 
                        if (!UseSharedSLL(PanelSecurity.PackageId))
                     {                        
-                        SharePointSiteCollectionListPaged existentSiteCollections = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollectionsPaged(PanelSecurity.PackageId, this.OrganizationId, "ItemName", String.Format("%{0}", this.domain.DomainName), String.Empty, 0, Int32.MaxValue);
-                        foreach (SharePointSiteCollection existentSiteCollection in existentSiteCollections.SiteCollections)
+                        SharePointEnterpriseSiteCollectionListPaged existentSiteCollections = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollectionsPaged(PanelSecurity.PackageId, this.OrganizationId, "ItemName", String.Format("%{0}", this.domain.DomainName), String.Empty, 0, Int32.MaxValue);
+                        foreach (SharePointEnterpriseSiteCollection existentSiteCollection in existentSiteCollections.SiteCollections)
                         {
                             Uri existentSiteCollectionUri = new Uri(existentSiteCollection.Name);
                             if (existentSiteCollection.Name == String.Format("{0}://{1}", existentSiteCollectionUri.Scheme, this.txtHostName.Text.ToLower() + "." + this.domain.DomainName))

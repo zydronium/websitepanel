@@ -71,7 +71,7 @@ namespace WebsitePanel.Portal
 		{
 			try
 			{
-				SharePointSiteCollection siteCollection = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollection(this.SiteCollectionId);
+				SharePointEnterpriseSiteCollection siteCollection = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollection(this.SiteCollectionId);
 				litSiteCollectionName.Text = siteCollection.PhysicalAddress;
 				fileLookup.SelectedFile = String.Empty;
 				fileLookup.PackageId = siteCollection.PackageId;

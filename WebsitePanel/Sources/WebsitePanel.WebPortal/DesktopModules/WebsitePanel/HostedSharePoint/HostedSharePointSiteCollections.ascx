@@ -1,13 +1,13 @@
-<%@ Control Language="C#" AutoEventWireup="true" Codebehind="HostedSharePointEnterpriseSiteCollections.ascx.cs"
-	Inherits="WebsitePanel.Portal.HostedSharePointEnterpriseSiteCollections" %>
-<%@ Register Src="UserControls/SpaceServiceItems.ascx" TagName="SpaceServiceItems"
+<%@ Control Language="C#" AutoEventWireup="true" Codebehind="HostedSharePointSiteCollections.ascx.cs"
+	Inherits="WebsitePanel.Portal.HostedSharePointSiteCollections" %>
+<%@ Register Src="../UserControls/SpaceServiceItems.ascx" TagName="SpaceServiceItems"
 	TagPrefix="wsp" %>
-<%@ Register Src="UserControls/SimpleMessageBox.ascx" TagName="SimpleMessageBox"
+<%@ Register Src="../UserControls/SimpleMessageBox.ascx" TagName="SimpleMessageBox"
 	TagPrefix="wsp" %>
-<%@ Register Src="UserControls/QuotaViewer.ascx" TagName="QuotaViewer" TagPrefix="wsp" %>
-<%@ Register Src="UserControls/Quota.ascx" TagName="Quota" TagPrefix="wsp" %>
+<%@ Register Src="../UserControls/QuotaViewer.ascx" TagName="QuotaViewer" TagPrefix="wsp" %>
+<%@ Register Src="../UserControls/Quota.ascx" TagName="Quota" TagPrefix="wsp" %>
 	
-<%@ Register Src="UserControls/EnableAsyncTasksSupport.ascx" TagName="EnableAsyncTasksSupport"
+<%@ Register Src="../UserControls/EnableAsyncTasksSupport.ascx" TagName="EnableAsyncTasksSupport"
 	TagPrefix="wsp" %>
 
 <wsp:EnableAsyncTasksSupport id="asyncTasks" runat="server" />
@@ -71,7 +71,7 @@ function confirmation()
 						</Columns>
 					</asp:GridView>
 					<asp:ObjectDataSource ID="odsSiteCollectionsPaged" runat="server" EnablePaging="True" SelectCountMethod="GetSharePointSiteCollectionPagedCount"
-						SelectMethod="GetSharePointSiteCollectionPaged" SortParameterName="sortColumn" TypeName="WebsitePanel.Portal.HostedSharePointEnterpriseSiteCollectionsHelper"
+						SelectMethod="GetSharePointSiteCollectionPaged" SortParameterName="sortColumn" TypeName="WebsitePanel.Portal.HostedSharePointSiteCollectionsHelper"
 						OnSelected="odsSharePointSiteCollectionPaged_Selected">
 						<SelectParameters>
 					        <asp:QueryStringParameter Name="packageId" QueryStringField="SpaceID" DefaultValue="-1" />

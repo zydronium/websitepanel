@@ -73,7 +73,7 @@ namespace WebsitePanel.Portal
 		{
 			try
 			{
-				SharePointSiteCollection siteCollection = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollection(this.SiteCollectionId);
+				SharePointEnterpriseSiteCollection siteCollection = ES.Services.HostedSharePointServersEnt.Enterprise_GetSiteCollection(this.SiteCollectionId);
 				litSiteCollectionName.Text = siteCollection.PhysicalAddress;
 				txtBackupName.Text = siteCollection.Url + BACKUP_EXTENSION;
 				fileLookup.SelectedFile = "\\";

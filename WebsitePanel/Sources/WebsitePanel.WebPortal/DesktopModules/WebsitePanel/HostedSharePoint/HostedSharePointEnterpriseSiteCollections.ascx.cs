@@ -58,7 +58,7 @@ namespace WebsitePanel.Portal
 
 			siteCollectionsQuota.QuotaUsedValue = stats.CreatedSharePointEnterpriseSiteCollections;
 			siteCollectionsQuota.QuotaValue = stats.AllocatedSharePointEnterpriseSiteCollections;
-            if (stats.AllocatedSharePointSiteCollections != -1) siteCollectionsQuota.QuotaAvailable = tenantStats.AllocatedSharePointEnterpriseSiteCollections - tenantStats.CreatedSharePointEnterpriseSiteCollections;
+            if (stats.AllocatedSharePointEnterpriseSiteCollections != -1) siteCollectionsQuota.QuotaAvailable = tenantStats.AllocatedSharePointEnterpriseSiteCollections - tenantStats.CreatedSharePointEnterpriseSiteCollections;
 		}
 
 		protected void btnCreateSiteCollection_Click(object sender, EventArgs e)
@@ -73,7 +73,7 @@ namespace WebsitePanel.Portal
 					"ItemID=" + PanelRequest.ItemID.ToString());
 		}
 
-		protected void odsSharePointSiteCollectionPaged_Selected(object sender, ObjectDataSourceStatusEventArgs e)
+		protected void odsSharePointEnterpriseSiteCollectionPaged_Selected(object sender, ObjectDataSourceStatusEventArgs e)
 		{
 			if (e.Exception != null)
 			{
