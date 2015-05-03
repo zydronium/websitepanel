@@ -14,6 +14,7 @@ using WebsitePanel.WebDav.Core.Wsp.Framework;
 using WebsitePanel.WebDavPortal.CustomAttributes;
 using WebsitePanel.WebDavPortal.Models;
 using WebsitePanel.WebDavPortal.Models.Account;
+using WebsitePanel.WebDavPortal.Models.Account.Enums;
 using WebsitePanel.WebDavPortal.Models.Common;
 using WebsitePanel.WebDavPortal.Models.Common.EditorTemplates;
 using WebsitePanel.WebDavPortal.Models.Common.Enums;
@@ -162,16 +163,16 @@ namespace WebsitePanel.WebDavPortal.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public ActionResult PasswordResetEmail()
+        public ActionResult PasswordResetLogin()
         {
-            var model = new PasswordResetEmailModel();
+            var model = new PasswordResetLoginModel();
 
             return View(model);
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public ActionResult PasswordResetEmail(PasswordResetEmailModel model)
+        public ActionResult PasswordResetLogin(PasswordResetLoginModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -187,17 +188,117 @@ namespace WebsitePanel.WebDavPortal.Controllers
                 return View(model);
             }
 
-            WspContext.Services.Organizations.SendResetUserPasswordEmail(exchangeAccount.ItemId, exchangeAccount.AccountId, Resources.Messages.PasswordResetUserReason, exchangeAccount.PrimaryEmailAddress, false);
+            var tokenEntity = WspContext.Services.Organizations.CreatePasswordResetAccessToken(exchangeAccount.ItemId, exchangeAccount.AccountId);
 
-            return View("PasswordResetEmailSent");
+            return RedirectToRoute(AccountRouteNames.PasswordResetPincodeSendOptions, new {token = tokenEntity.AccessTokenGuid.ToString("N")});
         }
-
 
         [HttpGet]
         [AllowAnonymous]
-        public ActionResult PasswordResetSms(Guid token)
+        public ActionResult PasswordResetPincodeSendOptions(Guid token)
         {
-            var model = new PasswordResetSmsModel();
+            var accessToken = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);
+
+            if (accessToken == null)
+            {
+                AddMessage(MessageType.Error, Resources.Messages.IncorrectPasswordResetUrl);
+
+                return RedirectToRoute(AccountRouteNames.PasswordResetLogin);
+            }
+
+            var user = WspContext.Services.Organizations.GetUserGeneralSettings(accessToken.ItemId, accessToken.AccountId);
+
+            if (string.IsNullOrEmpty(user.MobilePhone))
+            {
+                var result = WspContext.Services.Organizations.SendResetUserPasswordPincodeEmail(accessToken.AccessTokenGuid, user.PrimaryEmailAddress);
+
+                if (result.IsSuccess)
+                {
+                    AddMessage(MessageType.Success, Resources.Messages.PincodeEmailWasSent);
+                }
+                else
+                {
+                    AddMessage(MessageType.Error, Resources.Messages.PincodeEmailWasNotSent);
+                }
+
+                return RedirectToRoute(AccountRouteNames.PasswordResetPincode);
+            }
+
+            var model = new PasswordResetPincodeSendOptionsModel();
+
+            model.MobileNumber = user.MobilePhone;
+            model.Email = user.PrimaryEmailAddress;
+
+            return View(model);
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult PasswordResetPincodeSendOptions(Guid token, PasswordResetPincodeSendOptionsModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return View(model);
+            }
+
+            var accessToken = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);
+
+            if (accessToken == null)
+            {
+                AddMessage(MessageType.Error, Resources.Messages.IncorrectPasswordResetUrl);
+
+                return RedirectToRoute(AccountRouteNames.PasswordResetLogin);
+            }
+
+            var user = WspContext.Services.Organizations.GetUserGeneralSettings(accessToken.ItemId, accessToken.AccountId);
+
+            switch (model.Method)
+            {
+                case PincodeSendMethod.Mobile:
+                {
+                    var result = WspContext.Services.Organizations.SendResetUserPasswordPincodeSms(accessToken.AccessTokenGuid, user.MobilePhone);
+
+                    if (result.IsSuccess)
+                    {
+                        AddMessage(MessageType.Success, Resources.Messages.SmsWasSent);
+                    }
+                    else
+                    {
+                        AddMessage(MessageType.Error, Resources.Messages.SmsWasNotSent);
+
+                        return RedirectToRoute(AccountRouteNames.PasswordResetPincodeSendOptions);
+                    }
+
+                    break;
+                }
+                case PincodeSendMethod.Email:
+                {
+                    var result = WspContext.Services.Organizations.SendResetUserPasswordPincodeEmail(accessToken.AccessTokenGuid, user.PrimaryEmailAddress);
+
+                    if (result.IsSuccess)
+                    {
+                        AddMessage(MessageType.Success, Resources.Messages.PincodeEmailWasSent);
+                    }
+                    else
+                    {
+                        AddMessage(MessageType.Error, Resources.Messages.PincodeEmailWasNotSent);
+
+                        return RedirectToRoute(AccountRouteNames.PasswordResetPincodeSendOptions);
+                    }
+
+                    break;
+                }
+                
+            }
+
+            return RedirectToRoute(AccountRouteNames.PasswordResetPincode);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult PasswordResetPincode(Guid token)
+        {
+            var model = new PasswordResetPincodeModel();
 
             var accessToken = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);
 
@@ -207,25 +308,13 @@ namespace WebsitePanel.WebDavPortal.Controllers
             {
                 AddMessage(MessageType.Error, Resources.Messages.IncorrectPasswordResetUrl);
 
-                return View(model);
+                return RedirectToRoute(AccountRouteNames.PasswordResetLogin);
             }
 
 
             if (accessToken != null && accessToken.IsSmsSent == false)
             {
-                var user = WspContext.Services.Organizations.GetUserGeneralSettings(accessToken.ItemId,
-                    accessToken.AccountId);
-
-                var result = WspContext.Services.Organizations.SendResetUserPasswordPincodeSms(token, user.MobilePhone);
-
-                if (result.IsSuccess)
-                {
-                    AddMessage(MessageType.Success, Resources.Messages.SmsWasSent);
-                }
-                else
-                {
-                    AddMessage(MessageType.Error, Resources.Messages.SmsWasNotSent);
-                }
+                return RedirectToRoute(AccountRouteNames.PasswordResetPincodeSendOptions);
             }
 
             return View(model);
@@ -233,7 +322,7 @@ namespace WebsitePanel.WebDavPortal.Controllers
 
         [HttpPost]
         [AllowAnonymous]
-        public ActionResult PasswordResetSms(Guid token, PasswordResetSmsModel model)
+        public ActionResult PasswordResetPincode(Guid token, PasswordResetPincodeModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -267,15 +356,21 @@ namespace WebsitePanel.WebDavPortal.Controllers
                 return result;
             }
 
+            var tokenEntity = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);
+            var account = WspContext.Services.Organizations.GetUserGeneralSettings(tokenEntity.ItemId,
+                tokenEntity.AccountId);
 
-            var model = new PasswordEditor();
+            var model = new PasswordResetFinalStepModel();
+
+            model.PasswordEditor.Settings = WspContext.Services.Organizations.GetOrganizationPasswordSettings(tokenEntity.ItemId);
+            model.Login = account.UserPrincipalName;
 
             return View(model);
         }
 
         [HttpPost]
         [AllowAnonymous]
-        public ActionResult PasswordResetFinalStep(Guid token, string pincode, PasswordEditor model)
+        public ActionResult PasswordResetFinalStep(Guid token, string pincode, PasswordResetFinalStepModel model)
         {
             if (!ModelState.IsValid)
             {
@@ -293,11 +388,9 @@ namespace WebsitePanel.WebDavPortal.Controllers
 
             WspContext.Services.Organizations.SetUserPassword(
                     tokenEntity.ItemId, tokenEntity.AccountId,
-                    model.NewPassword);
+                    model.PasswordEditor.NewPassword);
 
             WspContext.Services.Organizations.DeletePasswordresetAccessToken(token);
-
-            AddMessage(MessageType.Success, Resources.Messages.PasswordSuccessfullyChanged);
 
             return RedirectToRoute(AccountRouteNames.PasswordResetSuccess);
         }
@@ -307,35 +400,6 @@ namespace WebsitePanel.WebDavPortal.Controllers
         public ActionResult PasswordSuccessfullyChanged()
         {
             return View();
-        }
-
-        [HttpGet]
-        [AllowAnonymous]
-        public ActionResult PasswordResetSendSms(Guid token)
-        {
-            var accessToken = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);
-
-            if (accessToken == null)
-            {
-                return RedirectToRoute(AccountRouteNames.PasswordResetSms);
-            }
-
-            var user = WspContext.Services.Organizations.GetUserGeneralSettings(accessToken.ItemId,
-                accessToken.AccountId);
-
-            var result = WspContext.Services.Organizations.SendResetUserPasswordPincodeSms(accessToken.AccessTokenGuid,
-                user.MobilePhone);
-
-            if (result.IsSuccess)
-            {
-                AddMessage(MessageType.Success, Resources.Messages.SmsWasSent);
-            }
-            else
-            {
-                AddMessage(MessageType.Error, Resources.Messages.SmsWasNotSent);
-            }
-
-            return RedirectToRoute(AccountRouteNames.PasswordResetSms);
         }
 
         #region Helpers
@@ -358,7 +422,7 @@ namespace WebsitePanel.WebDavPortal.Controllers
             {
                 AddMessage(MessageType.Error, Resources.Messages.IncorrectSmsResponse);
 
-                return RedirectToRoute(AccountRouteNames.PasswordResetSms);
+                return RedirectToRoute(AccountRouteNames.PasswordResetPincode); //todo
             }
 
             var tokenEntity = WspContext.Services.Organizations.GetPasswordresetAccessToken(token);

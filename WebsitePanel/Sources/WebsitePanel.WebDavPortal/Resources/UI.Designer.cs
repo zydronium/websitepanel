@@ -655,6 +655,15 @@ namespace WebsitePanel.WebDavPortal.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Password must meet the following requirements:.
+        /// </summary>
+        public static string PasswordFollowingRequirements {
+            get {
+                return ResourceManager.GetString("PasswordFollowingRequirements", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Password never expires. If you want to change password then please click {0}..
         /// </summary>
         public static string PasswordNeverExpiresFormat {
@@ -687,6 +696,15 @@ namespace WebsitePanel.WebDavPortal.Resources {
         public static string PetabyteShort {
             get {
                 return ResourceManager.GetString("PetabyteShort", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Pincode.
+        /// </summary>
+        public static string Pincode {
+            get {
+                return ResourceManager.GetString("Pincode", resourceCulture);
             }
         }
         
@@ -799,11 +817,29 @@ namespace WebsitePanel.WebDavPortal.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Send.
+        /// </summary>
+        public static string Send {
+            get {
+                return ResourceManager.GetString("Send", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Send email.
         /// </summary>
         public static string SendEmail {
             get {
                 return ResourceManager.GetString("SendEmail", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to When you click the send button below, a Password Reset PIN will be sent to your Cell Phone or Email Address..
+        /// </summary>
+        public static string SendPincodeTo {
+            get {
+                return ResourceManager.GetString("SendPincodeTo", resourceCulture);
             }
         }
         
@@ -912,6 +948,15 @@ namespace WebsitePanel.WebDavPortal.Resources {
         public static string Yes {
             get {
                 return ResourceManager.GetString("Yes", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to You are changing password for &apos;{0}&apos; account..
+        /// </summary>
+        public static string YouRChangingPswForFormat {
+            get {
+                return ResourceManager.GetString("YouRChangingPswForFormat", resourceCulture);
             }
         }
         
